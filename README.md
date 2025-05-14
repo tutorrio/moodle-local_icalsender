@@ -12,7 +12,7 @@ The logic is triggered by listening  to following Moodle system event:
 - \core\event\group_member_added
 - \core\event\group_member_removed
 
-Each of these events will cause an email with ICS attachment to be sent to the attendee of the calendar event AND to the creator of the event.
+Each of these events will cause an email with ICS attachment to be sent to the attendee(s) of the calendar event AND to the creator(aka organizer) or of the event.
 This way attendees and organizer can use their calendar application for RSVP'ing, following up who is attending,...
 
 
