@@ -16,22 +16,20 @@
 
 namespace local_icalsender;
 
-defined('MOODLE_INTERNAL') || die();
-
-
- /**
-  * Unit tests for observer class.
+/**
+ * Unit tests for observer class.
  *
  * @package    local_icalsender
  * @copyright  2025 Mario Vitale <mario.vitale@tutorrio.com>
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
-class observer_test extends \advanced_testcase {
+final class observer_test extends \advanced_testcase {
 
     /**
      * Test calendar_event_created observer.
+     * @covers \local_icalsender\helper::test_calendar_event_created_course_event
      */
-    public function test_calendar_event_created_course_event() {
+    public function test_calendar_event_created_course_event(): void {
         global $DB, $CFG;
 
         // Ensure required Moodle libs are loaded for static analysis and runtime.
@@ -43,7 +41,12 @@ class observer_test extends \advanced_testcase {
 
         // Create a course and a user.
         $course = $this->getDataGenerator()->create_course();
-        $user = $this->getDataGenerator()->create_user(array('firstname' => 'Alice','lastname' => 'Wonderland','email'=>'user1@example.com', 'username'=>'alice@example.com'));
+        $user = $this->getDataGenerator()->create_user([
+            'firstname' => 'Alice',
+            'lastname' => 'Wonderland',
+            'email' => 'user1@example.com',
+            'username' => 'alice@example.com',
+        ]);
         $this->setAdminUser();
 
         // Enrol user in course.
@@ -90,6 +93,7 @@ class observer_test extends \advanced_testcase {
         $eventobj = \core\event\calendar_event_created::create($eventdata);
 
         // Call the observer.
+        $this->assertDebuggingNotCalled(); // If you want to ensure no unexpected debug output.
         observer::calendar_event_created($eventobj);
 
         // Assert that the event was logged in ics_event_log.
@@ -98,8 +102,11 @@ class observer_test extends \advanced_testcase {
         $this->assertEquals($event->name, $log->eventname);
     }
 
-
-    public function test_calendar_event_deleted_course_event() {
+    /**
+     * Test calendar delete
+     * @covers \local_icalsender\helper::test_calendar_event_deleted_course_event
+     */
+    public function test_calendar_event_deleted_course_event(): void {
         global $DB, $CFG;
 
         require_once($CFG->dirroot . '/calendar/lib.php');
@@ -108,7 +115,12 @@ class observer_test extends \advanced_testcase {
 
         // Create course and user, enrol user.
         $course = $this->getDataGenerator()->create_course();
-        $user = $this->getDataGenerator()->create_user(array('firstname' => 'Alice','lastname' => 'Wonderland','email'=>'user1@example.com', 'username'=>'alice@example.com'));
+        $user = $this->getDataGenerator()->create_user([
+            'firstname' => 'Alice',
+            'lastname' => 'Wonderland',
+            'email' => 'user1@example.com',
+            'username' => 'alice@example.com',
+        ]);
         $this->setAdminUser();
 
         $enrol = enrol_get_plugin('manual');
@@ -143,7 +155,7 @@ class observer_test extends \advanced_testcase {
             'eventid' => $eventid,
             'eventname' => $event->name,
             'seqnum' => 0,
-            'senttime' => time()
+            'senttime' => time(),
         ]);
 
         // Now trigger the deletion.
@@ -171,18 +183,23 @@ class observer_test extends \advanced_testcase {
     }
 
     /**
-     * Test
+     * Test calender update
+     * @covers \local_icalsender\helper::test_calendar_event_updated_course_event
      */
-    public function test_calendar_event_updated_course_event() {
+    public function test_calendar_event_updated_course_event(): void {
         global $DB, $CFG;
 
         require_once($CFG->dirroot . '/calendar/lib.php');
 
         $this->resetAfterTest(true);
 
-        // Create course and user, enrol user.
         $course = $this->getDataGenerator()->create_course();
-        $user = $this->getDataGenerator()->create_user(array('firstname' => 'Alice','lastname' => 'Wonderland','email'=>'user1@example.com', 'username'=>'alice@example.com'));
+        $user = $this->getDataGenerator()->create_user([
+            'firstname' => 'Alice',
+            'lastname' => 'Wonderland',
+            'email' => 'user1@example.com',
+            'username' => 'alice@example.com',
+        ]);
         $this->setAdminUser();
 
         $enrol = enrol_get_plugin('manual');
@@ -210,7 +227,7 @@ class observer_test extends \advanced_testcase {
         $event->timemodified = time();
         $eventid = $DB->insert_record('event', $event);
 
-        // Simulate the event has already been logged
+        // Simulate the event has already been logged.
         $DB->insert_record('ics_event_log', [
             'eventid' => $eventid,
             'eventname' => $event->name,
@@ -218,7 +235,7 @@ class observer_test extends \advanced_testcase {
             'senttime' => time(),
         ]);
 
-        // Create and trigger the update event
+        // Create and trigger the update event.
         $eventdata = [
             'objectid' => $eventid,
             'courseid' => $course->id,
@@ -233,12 +250,12 @@ class observer_test extends \advanced_testcase {
         ];
         $eventobj = \core\event\calendar_event_updated::create($eventdata);
 
-        // Call the observer
+        // Call the observer.
+        $this->assertDebuggingNotCalled(); // If you want to ensure no unexpected debug output.
         observer::calendar_event_updated($eventobj);
 
-        // Check sequence was incremented
+        // Check sequence was incremented.
         $newseq = $DB->get_field('ics_event_log', 'seqnum', ['eventid' => $eventid]);
         $this->assertEquals(1, $newseq, 'Sequence number should be incremented after update');
     }
-
 }

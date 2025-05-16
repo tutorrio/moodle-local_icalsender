@@ -73,7 +73,6 @@ class observer {
         // Run the query.
         $events = $DB->get_records_sql($sql, ['courseid' => $courseid]);
         if (empty($events)) {
-            debugging("icalsender: no relevant course or group calendar events found.", DEBUG_DEVELOPER);
             return;
         }
 
@@ -304,7 +303,8 @@ class observer {
             $eventrecord->description = "Cancelling LMS Event $eventname for $course->fullname";
             $eventrecord->timestart = $event->other['timestart'];
             $eventrecord->timeduration = $event->other['timeduration'];
-            $eventrecord->location = '';    // Location information is lost since already removed from DB table.Just set to empty, this is not crucial information.
+            // Location information is lost since already removed from DB table.Just set to empty.
+            $eventrecord->location = '';
             $courseurl = new \moodle_url('/course/view.php', ['id' => $courseid]);
 
             send_mail_with_delete_ics_attachment($eventrecord, $users, $courseurl->out(), true, $seqnum);

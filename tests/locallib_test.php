@@ -15,20 +15,15 @@
 // along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 
 defined('MOODLE_INTERNAL') || die();
-/**
- * Unittests for iCalSender
- *
- * @package    local_icalsender
- * @copyright  2025 Mario Vitale <mario.vitale@tutorrio.com>
- * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
- */
 
 use PHPUnit\Framework\TestCase;
 
-// Global variable to capture calls to send_ics_mail_from_noreply in tests.
-global $send_ics_mail_calls;
-$send_ics_mail_calls = [];
+// Global variables.
+global $CFG;
+global $senticsmails;
+$senticsmails = [];
 
+// Stub function.
 if (!function_exists('send_ics_mail_from_noreply')) {
     /**
      * Test double for send_ics_mail_from_noreply to capture calls during tests.
@@ -40,8 +35,8 @@ if (!function_exists('send_ics_mail_from_noreply')) {
      * @return void
      */
     function send_ics_mail_from_noreply($user, $subject, $message, $icsdata) {
-        global $send_ics_mail_calls;
-        $send_ics_mail_calls[] = [
+        global $senticsmails;
+        $senticsmails[] = [
             'useremail' => $user->email,
             'subject' => $subject,
             'message' => $message,
@@ -49,9 +44,6 @@ if (!function_exists('send_ics_mail_from_noreply')) {
         ];
     }
 }
-
-// Now include the original locallib.php which uses send_ics_mail_from_noreply().
-global $CFG;
 require_once($CFG->dirroot . '/local/icalsender/locallib.php');
 
 /**
@@ -61,60 +53,71 @@ require_once($CFG->dirroot . '/local/icalsender/locallib.php');
  * @copyright  2025 Mario Vitale <mario.vitale@tutorrio.com>
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
-class local_icalsender_locallib_test extends TestCase {
+final class local_icalsender_locallib_test extends TestCase {
 
     /**
      * Test format_ics_datetime returns correct ICS datetime string for known timestamps.
+     * @covers \local_icalsender\helper::format_ics_datetime_basic
      */
-    public function test_format_ics_datetime_basic() {
+    public function test_format_ics_datetime_basic(): void {
         // 2024-05-09 12:00:00 UTC
         $timestamp = 1715256000;
         $expected = '20240509T120000Z';
         $this->assertSame($expected, format_ics_datetime($timestamp));
+        return;
     }
 
     /**
      * Test format_ics_datetime returns correct ICS datetime string for midnight timestamp.
+     * @covers \local_icalsender\helper::test_format_ics_datetime_midnight
      */
-    public function test_format_ics_datetime_midnight() {
+    public function test_format_ics_datetime_midnight(): void {
         // 2025-01-01 00:00:00 UTC
         $timestamp = 1735689600;
         $expected = '20250101T000000Z';
         $this->assertSame($expected, format_ics_datetime($timestamp));
+        return;
     }
 
     /**
      * Test format_ics_datetime returns correct ICS datetime string for end of year timestamp.
+     * @covers \local_icalsender\helper::test_format_ics_datetime_end_of_year
      */
-    public function test_format_ics_datetime_end_of_year() {
+    public function test_format_ics_datetime_end_of_year(): void {
         // 2023-12-31 23:59:59 UTC
         $timestamp = 1704067199;
         $expected = '20231231T235959Z';
         $this->assertSame($expected, format_ics_datetime($timestamp));
+        return;
     }
 
     /**
      * Test format_ics_datetime returns correct ICS datetime string for Unix epoch timestamp.
+     * @covers \local_icalsender\helper::test_format_ics_datetime_epoch
      */
-    public function test_format_ics_datetime_epoch() {
+    public function test_format_ics_datetime_epoch(): void {
         $timestamp = 0;
         $expected = '19700101T000000Z';
         $this->assertSame($expected, format_ics_datetime($timestamp));
+        return;
     }
 
     /**
      * Test remove_newlines removes all types of newlines and carriage returns.
+     * @covers \local_icalsender\helper::test_remove_newlines_mixed
      */
-    public function test_remove_newlines_mixed() {
+    public function test_remove_newlines_mixed(): void {
         $input = "Line1\r\nLine2\nLine3\rLine4";
         $expected = "Line1Line2Line3Line4";
         $this->assertSame($expected, remove_newlines($input));
+        return;
     }
 
     /**
      * Test remove_newlines removes string containing only newlines and carriage returns.
+     * @covers \local_icalsender\helper::test_remove_newlines_only_newlines
      */
-    public function test_remove_newlines_only_newlines() {
+    public function test_remove_newlines_only_newlines(): void {
         $input = "\n\r\n\r";
         $expected = "";
         $this->assertSame($expected, remove_newlines($input));
@@ -123,8 +126,9 @@ class local_icalsender_locallib_test extends TestCase {
 
     /**
      * Test remove_newlines returns unchanged string when no newlines are present.
+     * @covers \local_icalsender\helper::test_remove_newlines_no_newlines
      */
-    public function test_remove_newlines_no_newlines() {
+    public function test_remove_newlines_no_newlines(): void {
         $input = "NoNewlinesHere";
         $expected = "NoNewlinesHere";
         $this->assertSame($expected, remove_newlines($input));
@@ -133,8 +137,9 @@ class local_icalsender_locallib_test extends TestCase {
 
     /**
      * Test remove_newlines returns empty string when input is empty.
+     * @covers \local_icalsender\helper::test_remove_newlines_empty_string
      */
-    public function test_remove_newlines_empty_string() {
+    public function test_remove_newlines_empty_string(): void {
         $input = "";
         $expected = "";
         $this->assertSame($expected, remove_newlines($input));
@@ -143,8 +148,9 @@ class local_icalsender_locallib_test extends TestCase {
 
     /**
      * Test remove_newlines removes newlines at the start and end of the string.
+     * @covers \local_icalsender\helper::test_remove_newlines_newlines_at_edges
      */
-    public function test_remove_newlines_newlines_at_edges() {
+    public function test_remove_newlines_newlines_at_edges(): void {
         $input = "\nStartMiddle\r\nEnd\r";
         $expected = "StartMiddleEnd";
         $this->assertSame($expected, remove_newlines($input));
@@ -153,8 +159,9 @@ class local_icalsender_locallib_test extends TestCase {
 
     /**
      * Test generate_ics function with a basic event and attendees.
+     * @covers \local_icalsender\helper::test_generate_ics_basic
      */
-    public function test_generate_ics_basic() {
+    public function test_generate_ics_basic(): void {
         // Prepare event record.
         $eventrecord = new \stdClass();
         $eventrecord->id = 123;
@@ -213,8 +220,9 @@ class local_icalsender_locallib_test extends TestCase {
 
     /**
      * Test generate_update_ics function with an updated event and attendees.
+     * @covers \local_icalsender\helper::test_generate_update_ics_basic
      */
-    public function test_generate_update_ics_basic() {
+    public function test_generate_update_ics_basic(): void {
         // Prepare event record.
         $eventrecord = new \stdClass();
         $eventrecord->id = 456;
@@ -269,8 +277,9 @@ class local_icalsender_locallib_test extends TestCase {
 
     /**
      * Test generate_cancel_ics function with a cancelled event.
+     * @covers \local_icalsender\helper::test_generate_cancel_ics_basic
      */
-    public function test_generate_cancel_ics_basic() {
+    public function test_generate_cancel_ics_basic(): void {
         // Prepare event record.
         $eventrecord = new \stdClass();
         $eventrecord->id = 789;
@@ -315,22 +324,23 @@ class local_icalsender_locallib_test extends TestCase {
      * - send_ics_mail_from_noreply is called at least once.
      * - The organizer receives an email if $organizeralso is true.
      * - All users in the attendees list receive an email.
+     * @covers \local_icalsender\helper::test_send_mail_with_ics_attachment
      */
-    public function test_send_mail_with_ics_attachment() {
-        global $USER, $send_ics_mail_calls;
+    public function test_send_mail_with_ics_attachment(): void {
+        global $USER, $senticsmails;
 
         // Reset captured calls.
-        $send_ics_mail_calls = [];
+        $senticsmails = [];
 
         // Setup global USER mock.
-        $USER = new stdClass();
+        $USER = new \stdClass();
         $USER->id = 1;
         $USER->firstname = 'OrganizerFirst';
         $USER->lastname = 'OrganizerLast';
         $USER->email = 'organizer@example.com';
 
         // Dummy event record.
-        $eventrecord = new stdClass();
+        $eventrecord = new \stdClass();
         $eventrecord->id = 123;
         $eventrecord->name = 'Test Event';
         $eventrecord->timestart = time() + 3600; // 1 hour from now.
@@ -339,13 +349,13 @@ class local_icalsender_locallib_test extends TestCase {
         $eventrecord->description = "This is a test event.\nWith multiple lines.";
 
         // Dummy users array.
-        $user1 = new stdClass();
+        $user1 = new \stdClass();
         $user1->id = 2;
         $user1->firstname = 'UserOne';
         $user1->lastname = 'LastOne';
         $user1->email = 'userone@example.com';
 
-        $user2 = new stdClass();
+        $user2 = new \stdClass();
         $user2->id = 3;
         $user2->firstname = 'UserTwo';
         $user2->lastname = 'LastTwo';
@@ -361,13 +371,13 @@ class local_icalsender_locallib_test extends TestCase {
         send_mail_with_ics_attachment($eventrecord, $users, $url, $organizeralso, $seqnumber);
 
         // Assertions.
-        $this->assertNotEmpty($send_ics_mail_calls, "send_ics_mail_from_noreply was not called");
+        $this->assertNotEmpty($senticsmails, "send_ics_mail_from_noreply was not called");
 
         // Organizer email should be sent once.
         $foundorganizer = false;
         $founduserone = false;
         $foundusertwo = false;
-        foreach ($send_ics_mail_calls as $call) {
+        foreach ($senticsmails as $call) {
             if ($call['useremail'] === $USER->email) {
                 $foundorganizer = true;
             }
@@ -386,11 +396,12 @@ class local_icalsender_locallib_test extends TestCase {
 
     /**
      * Test send_mail_with_ics_attachment sends emails to all attendees and optionally the organizer.
+     * @covers \local_icalsender\helper::test_send_mail_with_ics_attachment_sends_to_all_attendees_and_optionally_organizer
      */
-    public function test_send_mail_with_ics_attachment_sends_to_all_attendees_and_optionally_organizer() {
-        global $send_ics_mail_calls, $USER;
+    public function test_send_mail_with_ics_attachment_sends_to_all_attendees_and_optionally_organizer(): void {
+        global $senticsmails, $USER;
 
-        $send_ics_mail_calls = [];
+        $senticsmails = [];
 
         // Mock global USER as the organizer.
         $USER = (object)[
@@ -398,6 +409,7 @@ class local_icalsender_locallib_test extends TestCase {
             'firstname' => 'Organizer',
             'lastname' => '',
             'email' => 'organizer@example.com',
+            'username' => 'organizer@example.com',
         ];
 
         // Create a fake event record.
@@ -416,12 +428,14 @@ class local_icalsender_locallib_test extends TestCase {
             'firstname' => 'Alice',
             'lastname' => 'wonderland',
             'email' => 'alice@example.com',
+            'username' => 'alice@example.com',
         ];
         $attendee2 = (object)[
             'id' => 3,
             'firstname' => 'Bob',
             'lastname' => 'Peeters',
             'email' => 'bob@example.com',
+            'username' => 'bob@example.com',
         ];
 
         $users = [$attendee1, $attendee2];
@@ -433,11 +447,11 @@ class local_icalsender_locallib_test extends TestCase {
         send_mail_with_ics_attachment($event, $users, $url, $organizeralso, $seqnumber);
 
         // Verify: should send to Alice, Bob, and the organizer.
-        $this->assertCount(3, $send_ics_mail_calls);
+        $this->assertCount(3, $senticsmails);
 
         $recipients = array_map(function($call) {
             return $call['useremail'];
-        }, $send_ics_mail_calls);
+        }, $senticsmails);
 
         $this->assertContains('alice@example.com', $recipients);
         $this->assertContains('bob@example.com', $recipients);
@@ -447,3 +461,4 @@ class local_icalsender_locallib_test extends TestCase {
     }
 
 }
+
