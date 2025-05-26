@@ -59,7 +59,8 @@ function local_icalsender_generate_attendees($users, $currentuseremail) {
         if ($user->email === $currentuseremail) {
             continue;
         }
-        $attendees .= "ATTENDEE;CN={$user->firstname} {$user->lastname};ROLE=REQ-PARTICIPANT;PARTSTAT=NEEDS-ACTION;RSVP=TRUE:mailto:{$user->email}\n";
+        $attendees .= "ATTENDEE;CN={$user->firstname} {$user->lastname};
+            ROLE=REQ-PARTICIPANT;PARTSTAT=NEEDS-ACTION;RSVP=TRUE:mailto:{$user->email}\n";
     }
     return $attendees;
 }
@@ -89,7 +90,8 @@ function local_icalsender_generate_ics($eventrecord, $desc, $users, $USER, $from
     $organizeremail = $isorganizer ? $from->email : $USER->email;
     $organizername = $isorganizer ? "LMS Organizer" : "{$USER->firstname} {$USER->lastname}";
 
-    $chair = "ATTENDEE;CN={$USER->firstname} {$USER->lastname};ROLE=CHAIR;PARTSTAT=ACCEPTED;RSVP=TRUE:mailto:{$USER->email}\n";
+    $chair = "ATTENDEE;CN={$USER->firstname} {$USER->lastname};
+            ROLE=CHAIR;PARTSTAT=ACCEPTED;RSVP=TRUE:mailto:{$USER->email}\n";
     $attendees = local_icalsender_generate_attendees($users, $USER->email);
 
     return <<<ICS
@@ -146,7 +148,8 @@ function local_icalsender_generate_update_ics($eventrecord, $desc, $users, $USER
     $organizeremail = $isorganizer ? $from->email : $USER->email;
     $organizername = $isorganizer ? "LMS Organizer" : "{$USER->firstname} {$USER->lastname}";
 
-    $chair = "ATTENDEE;CN={$USER->firstname} {$USER->lastname};ROLE=CHAIR;PARTSTAT=ACCEPTED;RSVP=TRUE:mailto:{$USER->email}\n";
+    $chair = "ATTENDEE;CN={$USER->firstname} {$USER->lastname};
+            ROLE=CHAIR;PARTSTAT=ACCEPTED;RSVP=TRUE:mailto:{$USER->email}\n";
     $attendees = local_icalsender_generate_attendees($users, $USER->email);
 
     return <<<ICS
@@ -371,7 +374,15 @@ if (!function_exists('local_icalsender_send_ics_mail_from_noreply')) {
             'mimetype' => 'text/calendar',
         ];
 
-        $success = email_to_user($user, $from, $subject, $message, $message, $attachments['path'], $attachments['name'], $attachments['mimetype']);
+        $success = email_to_user(
+                $user,
+                $from,
+                $subject,
+                $message,
+                $message,
+                $attachments['path'],
+                $attachments['name'],
+                $attachments['mimetype']);
         if (!$success) {
             debugging("icalsender: failed to send mail to $user->email", DEBUG_DEVELOPER);
         }
