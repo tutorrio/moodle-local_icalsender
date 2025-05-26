@@ -13,6 +13,7 @@
 //
 // You should have received a copy of the GNU General Public License
 // along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
+
 /**
  * Privacy Subsystem implementation for icalsender.
  *
@@ -21,11 +22,16 @@
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 
-
 namespace local_icalsender\privacy;
 
 defined('MOODLE_INTERNAL') || die();
 
+/**
+ * Privacy Subsystem for icalsender implementing null_provider.
+ *
+ * @copyright  2025 Mario Vitale <mario.vitale@tutorrio.com>
+ * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
+ */
 class provider implements
     // This plugin does not store any personal user data.
     \core_privacy\local\metadata\null_provider {
