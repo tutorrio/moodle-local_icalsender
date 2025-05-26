@@ -22,4 +22,4 @@
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 $string['pluginname'] = 'iCal Sender';
-
+$string['privacy:metadata'] = 'The iCalsender local plugin only stores calendar event data.';

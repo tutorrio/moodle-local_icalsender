@@ -28,7 +28,7 @@
  * @param int $timestamp Unix epoch time.
  * @return string Formatted datetime string for ICS (e.g., 20240509T120000Z).
  */
-function format_ics_datetime($timestamp) {
+function local_icalsender_format_ics_datetime($timestamp) {
     return gmdate('Ymd\THis\Z', $timestamp);
 }
 
@@ -39,7 +39,7 @@ function format_ics_datetime($timestamp) {
  * @param string $text The input text.
  * @return string The text with all line breaks removed.
  */
-function remove_newlines($text) {
+function local_icalsender_remove_newlines($text) {
     // Remove all types of line breaks.
     $cleanedtext = str_replace(["\r", "\n", "\r\n"], '', $text);
     return $cleanedtext;
@@ -51,7 +51,7 @@ function remove_newlines($text) {
  * @param string $currentuseremail The email address of the current user (to exclude from attendees).
  * @return string ICS-formatted attendee lines.
  */
-function generate_attendees($users, $currentuseremail) {
+function local_icalsender_generate_attendees($users, $currentuseremail) {
     $attendees = '';
     foreach ($users as $user) {
         if ($user->email === $currentuseremail) {
@@ -75,10 +75,10 @@ function generate_attendees($users, $currentuseremail) {
  * @param bool $isorganizer Whether the sender is the organizer.
  * @return string ICS file content.
  */
-function generate_ics($eventrecord, $desc, $users, $USER, $from, $seqnumber, $isorganizer = true) {
-    $dtstamp = format_ics_datetime(time());
-    $dtstart = format_ics_datetime($eventrecord->timestart);
-    $dtend = format_ics_datetime($eventrecord->timestart + $eventrecord->timeduration);
+function local_icalsender_generate_ics($eventrecord, $desc, $users, $USER, $from, $seqnumber, $isorganizer = true) {
+    $dtstamp = local_icalsender_format_ics_datetime(time());
+    $dtstart = local_icalsender_format_ics_datetime($eventrecord->timestart);
+    $dtend = local_icalsender_format_ics_datetime($eventrecord->timestart + $eventrecord->timeduration);
     $lastmodified = $dtstamp;
     $uid = "{$eventrecord->id}@learn.com";
     $summary = $eventrecord->name;
@@ -88,7 +88,7 @@ function generate_ics($eventrecord, $desc, $users, $USER, $from, $seqnumber, $is
     $organizername = $isorganizer ? "LMS Organizer" : "{$USER->firstname} {$USER->lastname}";
 
     $chair = "ATTENDEE;CN={$USER->firstname} {$USER->lastname};ROLE=CHAIR;PARTSTAT=ACCEPTED;RSVP=TRUE:mailto:{$USER->email}\n";
-    $attendees = generate_attendees($users, $USER->email);
+    $attendees = local_icalsender_generate_attendees($users, $USER->email);
 
     return <<<ICS
 BEGIN:VCALENDAR
@@ -132,10 +132,10 @@ ICS;
  * @param bool $isorganizer Whether the sender is the organizer.
  * @return string ICS file content for update.
  */
-function generate_update_ics($eventrecord, $desc, $users, $USER, $from, $seqnumber, $isorganizer = true) {
-    $dtstamp = format_ics_datetime(time());
-    $dtstart = format_ics_datetime($eventrecord->timestart);
-    $dtend = format_ics_datetime($eventrecord->timestart + $eventrecord->timeduration);
+function local_icalsender_generate_update_ics($eventrecord, $desc, $users, $USER, $from, $seqnumber, $isorganizer = true) {
+    $dtstamp = local_icalsender_format_ics_datetime(time());
+    $dtstart = local_icalsender_format_ics_datetime($eventrecord->timestart);
+    $dtend = local_icalsender_format_ics_datetime($eventrecord->timestart + $eventrecord->timeduration);
     $lastmodified = $dtstamp;
     $uid = "{$eventrecord->id}@learn.com";
     $summary = $eventrecord->name;
@@ -145,7 +145,7 @@ function generate_update_ics($eventrecord, $desc, $users, $USER, $from, $seqnumb
     $organizername = $isorganizer ? "LMS Organizer" : "{$USER->firstname} {$USER->lastname}";
 
     $chair = "ATTENDEE;CN={$USER->firstname} {$USER->lastname};ROLE=CHAIR;PARTSTAT=ACCEPTED;RSVP=TRUE:mailto:{$USER->email}\n";
-    $attendees = generate_attendees($users, $USER->email);
+    $attendees = local_icalsender_generate_attendees($users, $USER->email);
 
     return <<<ICS
 BEGIN:VCALENDAR
@@ -181,10 +181,10 @@ ICS;
  * @param int $seqnumber Sequence number for the event.
  * @return string ICS file content for cancellation.
  */
-function generate_cancel_ics($eventrecord, $desc, $USER, $organizeremail, $seqnumber) {
-    $dtstamp = format_ics_datetime(time());
-    $dtstart = format_ics_datetime($eventrecord->timestart);
-    $dtend = format_ics_datetime($eventrecord->timestart + $eventrecord->timeduration);
+function local_icalsender_generate_cancel_ics($eventrecord, $desc, $USER, $organizeremail, $seqnumber) {
+    $dtstamp = local_icalsender_format_ics_datetime(time());
+    $dtstart = local_icalsender_format_ics_datetime($eventrecord->timestart);
+    $dtend = local_icalsender_format_ics_datetime($eventrecord->timestart + $eventrecord->timeduration);
     $lastmodified = $dtstamp;
     $uid = "{$eventrecord->id}@learn.com";
     $summary = $eventrecord->name;
@@ -224,12 +224,12 @@ ICS;
  * @param int $seqnumber Sequence number for the event.
  * @return void
  */
-function send_mail_with_ics_attachment($eventrecord, $users, $url, $organizeralso, $seqnumber) {
+function local_icalsender_send_mail_with_ics_attachment($eventrecord, $users, $url, $organizeralso, $seqnumber) {
     global $USER;
 
     $eventdate = userdate($eventrecord->timestart);
     $subject = "New LMS Event {$eventrecord->name} on $eventdate";
-    $desc = remove_newlines($eventrecord->description);
+    $desc = local_icalsender_remove_newlines($eventrecord->description);
     $from = \core_user::get_noreply_user();
 
     if ($organizeralso == true ) {
@@ -239,8 +239,8 @@ function send_mail_with_ics_attachment($eventrecord, $users, $url, $organizerals
                . "Regards,<br>Your LMS";
 
         // Sent to organizer.
-        $icsdataorganizer = generate_ics($eventrecord, $desc, $users, $USER, $from, $seqnumber, true);
-        send_ics_mail_from_noreply($USER, $subject, $message, $icsdataorganizer);
+        $icsdataorganizer = local_icalsender_generate_ics($eventrecord, $desc, $users, $USER, $from, $seqnumber, true);
+        local_icalsender_send_ics_mail_from_noreply($USER, $subject, $message, $icsdataorganizer);
     }
     foreach ($users as $user) {
         $message   = "Hello {$user->firstname},<br><br>"
@@ -248,9 +248,9 @@ function send_mail_with_ics_attachment($eventrecord, $users, $url, $organizerals
         . "Please add this invite to your calendar to stay in the loop.<br><br>"
         . "Regards,<br>Your LMS";
 
-        $icsdataattendee  = generate_ics($eventrecord, $desc, $users, $USER, $from, $seqnumber, false);
+        $icsdataattendee  = local_icalsender_generate_ics($eventrecord, $desc, $users, $USER, $from, $seqnumber, false);
         if ($USER->email != $user->email ) {   // If mail == USER , skip since that's the organizer.
-            send_ics_mail_from_noreply($user, $subject, $message, $icsdataattendee);
+            local_icalsender_send_ics_mail_from_noreply($user, $subject, $message, $icsdataattendee);
         }
     }
 
@@ -268,11 +268,11 @@ function send_mail_with_ics_attachment($eventrecord, $users, $url, $organizerals
  * @param int $seqnumber Sequence number for the event.
  * @return void
  */
-function send_mail_with_delete_ics_attachment($eventrecord, $users, $url, $organizeralso, $seqnumber ) {
+function local_icalsender_send_mail_with_delete_ics_attachment($eventrecord, $users, $url, $organizeralso, $seqnumber ) {
     global $USER;
 
     $subject = "Cancelling LMS event {$eventrecord->name}";
-    $desc = remove_newlines($eventrecord->description);
+    $desc = local_icalsender_remove_newlines($eventrecord->description);
     $from = \core_user::get_noreply_user();
 
     if ($organizeralso == true ) {
@@ -281,18 +281,18 @@ function send_mail_with_delete_ics_attachment($eventrecord, $users, $url, $organ
         . "Regards,<br>Your LMS";
 
         // Delete also for organizer since the complete calendar event is deleted.
-        $icsdataorganizer = generate_cancel_ics($eventrecord, $desc, $USER, $from->email, $seqnumber);
-        send_ics_mail_from_noreply($USER, $subject, $message, $icsdataorganizer);
+        $icsdataorganizer = local_icalsender_generate_cancel_ics($eventrecord, $desc, $USER, $from->email, $seqnumber);
+        local_icalsender_send_ics_mail_from_noreply($USER, $subject, $message, $icsdataorganizer);
     }
 
-    $icsdataattendee = generate_cancel_ics($eventrecord, $desc, $USER, $USER->email, $seqnumber);
+    $icsdataattendee = local_icalsender_generate_cancel_ics($eventrecord, $desc, $USER, $USER->email, $seqnumber);
     foreach ($users as $user) {
         if ($USER->email != $user->email ) {
             $message   = "Hello {$user->firstname},<br><br>"
             . "One of your calendar events has been cancelled: '{$eventrecord->name}' for course $url.<br><br>"
             . "Regards,<br>Your LMS";
 
-            send_ics_mail_from_noreply($user, $subject, $message, $icsdataattendee);
+            local_icalsender_send_ics_mail_from_noreply($user, $subject, $message, $icsdataattendee);
         }
     }
 
@@ -310,7 +310,7 @@ function send_mail_with_delete_ics_attachment($eventrecord, $users, $url, $organ
  * @param int $seqnumber Sequence number for the event.
  * @return void
  */
-function send_mail_with_update_ics_attachment($eventrecord, $users, $url, $organizeronly, $seqnumber) {
+function local_icalsender_send_mail_with_update_ics_attachment($eventrecord, $users, $url, $organizeronly, $seqnumber) {
     global $USER;
 
     $eventdate = userdate($eventrecord->timestart);
@@ -319,19 +319,19 @@ function send_mail_with_update_ics_attachment($eventrecord, $users, $url, $organ
                . "Your event or training has been updated: '{$eventrecord->name}' scheduled on {$eventdate} for course $url.<br><br>"
                . "Regards,<br>Your LMS";
     $from = \core_user::get_noreply_user();
-    $desc = remove_newlines($eventrecord->description);
+    $desc = local_icalsender_remove_newlines($eventrecord->description);
 
-    $icsdataorganizer = generate_update_ics($eventrecord, $desc, $users, $USER, $from, $seqnumber, true);
-    send_ics_mail_from_noreply($USER, $subject, $messageorganizer, $icsdataorganizer);
+    $icsdataorganizer = local_icalsender_generate_update_ics($eventrecord, $desc, $users, $USER, $from, $seqnumber, true);
+    local_icalsender_send_ics_mail_from_noreply($USER, $subject, $messageorganizer, $icsdataorganizer);
     if ($organizeronly == false ) {      // Also send update to all other participants.
-        $icsdataattendee  = generate_update_ics($eventrecord, $desc, $users, $USER, $from, $seqnumber, false);
+        $icsdataattendee  = local_icalsender_generate_update_ics($eventrecord, $desc, $users, $USER, $from, $seqnumber, false);
         foreach ($users as $user) {
             if ($USER->email != $user->email ) {
                 $message = "Hello {$user->firstname},<br><br>"
                 . "Your event or training has been updated: '{$eventrecord->name}' scheduled on {$eventdate} for course $url.<br><br>"
                 . "Regards,<br>Your LMS";
 
-                send_ics_mail_from_noreply($user, $subject, $message, $icsdataattendee);
+                local_icalsender_send_ics_mail_from_noreply($user, $subject, $message, $icsdataattendee);
             }
         }
     }
@@ -339,7 +339,7 @@ function send_mail_with_update_ics_attachment($eventrecord, $users, $url, $organ
 }
 
 
-if (!function_exists('send_ics_mail_from_noreply')) {
+if (!function_exists('local_icalsender_send_ics_mail_from_noreply')) {
     /**
      * Sends an email with an ICS file attachment from the noreply user.
      *
@@ -349,7 +349,7 @@ if (!function_exists('send_ics_mail_from_noreply')) {
      * @param string $icsdata ICS file content.
      * @return void
      */
-    function send_ics_mail_from_noreply($user, $subject, $message, $icsdata) {
+    function local_icalsender_send_ics_mail_from_noreply($user, $subject, $message, $icsdata) {
         global $CFG;
 
         require_once($CFG->libdir . '/filelib.php');

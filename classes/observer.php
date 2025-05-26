@@ -50,28 +50,39 @@ class observer {
         }
 
         if ($event instanceof \core\event\user_enrolment_created ) {
-            // Only select 'course' calendar since only that event needs to be communicated to the enrolled users.
-            $sql = 'SELECT * FROM {event} WHERE courseid = :courseid AND eventtype = "course"';
             $context = \context_course::instance($courseid);
             $enrolledusers   = get_enrolled_users($context);
-        } else if ($event instanceof \core\event\cohort_member_added) {
             // Only select 'course' calendar since only that event needs to be communicated to the enrolled users.
-            $sql = 'SELECT * FROM {event} WHERE courseid = :courseid AND eventtype = "course"';
+            $sql = 'SELECT  *
+                    FROM    {event}
+                    WHERE   courseid = :courseid
+                            AND eventtype = "course"';
+            $events = $DB->get_records_sql($sql, ['courseid' => $courseid]);
+        } else if ($event instanceof \core\event\cohort_member_added) {
             $cohortid = $event->objectid;
             $enrolledusers = cohort_get_members($cohortid);
+            // Only select 'course' calendar since only that event needs to be communicated to the enrolled users.
+            $sql = 'SELECT  *
+                    FROM    {event}
+                    WHERE   courseid = :courseid
+                            AND eventtype = "course"';
+            $events = $DB->get_records_sql($sql, ['courseid' => $courseid]);
         } else if ( $event instanceof \core\event\group_member_added ) {
             $groupid = $event->objectid;
             $enrolledusers = groups_get_members($groupid);
             // Only select 'group' calendar since this event only impacts group changes.
-            $sql = 'SELECT * FROM {event} WHERE courseid = :courseid AND eventtype = "group" AND groupid='.$groupid;
-
+            $sql = 'SELECT  *
+                    FROM    {event}
+                    WHERE   courseid = :courseid
+                            AND eventtype = "group"
+                            AND groupid = :groupid';
+            $events = $DB->get_records_sql($sql, ['courseid' => $courseid, 'groupid' => $groupid]);
         } else {
             debugging("unsupported event...: ", DEBUG_DEVELOPER);
             return;
         }
 
-        // Run the query.
-        $events = $DB->get_records_sql($sql, ['courseid' => $courseid]);
+        // Check if SQL query returned calendar events.
         if (empty($events)) {
             return;
         }
@@ -81,8 +92,8 @@ class observer {
         foreach ($events as $eventrecord) {
             $eventid = $eventrecord->id;
             $seqnum = local_icalsender_get_sequence_number($eventid);
-            send_mail_with_ics_attachment($eventrecord, $userenrol, $courseurl->out(), false , $seqnum);
-            send_mail_with_update_ics_attachment($eventrecord, $enrolledusers, $courseurl->out(), true, $seqnum);
+            local_icalsender_send_mail_with_ics_attachment($eventrecord, $userenrol, $courseurl->out(), false , $seqnum);
+            local_icalsender_send_mail_with_update_ics_attachment($eventrecord, $enrolledusers, $courseurl->out(), true, $seqnum);
         }
     }
 
@@ -111,28 +122,39 @@ class observer {
         }
 
         if ($event instanceof \core\event\user_enrolment_deleted ) {
-            // Select all events..both Group and course since user is fully unenrolled from course.
-            $sql = 'SELECT * FROM {event} WHERE courseid = :courseid AND eventtype = "course"';
             $context = \context_course::instance($courseid);
             $enrolledusers   = get_enrolled_users($context);
-        } else if ($event instanceof \core\event\cohort_member_removed) {
             // Select all events..both Group and course since user is fully unenrolled from course.
-            $sql = 'SELECT * FROM {event} WHERE courseid = :courseid AND eventtype = "course"';
+            $sql = 'SELECT  *
+                    FROM    {event}
+                    WHERE   courseid = :courseid
+                            AND eventtype = "course"';
+            $events = $DB->get_records_sql($sql, ['courseid' => $courseid]);
+        } else if ($event instanceof \core\event\cohort_member_removed) {
             $cohortid = $event->objectid;
             $enrolledusers = cohort_get_members($cohortid);
+            // Select all events..both Group and course since user is fully unenrolled from course.
+            $sql = 'SELECT  *
+                    FROM    {event}
+                    WHERE   courseid = :courseid
+                            AND eventtype = "course"';
+            $events = $DB->get_records_sql($sql, ['courseid' => $courseid]);
         } else if ( $event instanceof \core\event\group_member_removed ) {
-            debugging("icalsender: group_member_removed", DEBUG_DEVELOPER);
             $groupid = $event->objectid;
             $enrolledusers = groups_get_members($groupid);
             // Only select 'group' calendar since this event only impacts group changes.
-            $sql = 'SELECT * FROM {event} WHERE courseid = :courseid AND eventtype = "group" AND groupid='.$groupid;
+            $sql = 'SELECT  *
+                    FROM    {event}
+                    WHERE   courseid = :courseid
+                            AND eventtype = "group"
+                            AND groupid = :groupid';
+            $events = $DB->get_records_sql($sql, ['courseid' => $courseid, 'groupid' => $groupid]);
         } else {
             debugging("icalsender: unsupported event", DEBUG_DEVELOPER);
             return;
         }
 
-        // Run the query.
-        $events = $DB->get_records_sql($sql, ['courseid' => $courseid, 'userid' => $userid]);
+        // Check if SQL query returned any calendar events.
         if (empty($events)) {
             debugging("icalsender: No relevant course or group calendar events found.", DEBUG_DEVELOPER);
             return;
@@ -144,9 +166,9 @@ class observer {
             $eventid = $eventrecord->id;
             $seqnum = local_icalsender_get_sequence_number($eventid);
             // Send delete to unenrolled user.
-            send_mail_with_delete_ics_attachment($eventrecord, $userunenrol, $courseurl->out() , false, $seqnum);
+            local_icalsender_send_mail_with_delete_ics_attachment($eventrecord, $userunenrol, $courseurl->out() , false, $seqnum);
             // Send update to organizer.
-            send_mail_with_update_ics_attachment($eventrecord, $enrolledusers, $courseurl->out(), true, $seqnum);
+            local_icalsender_send_mail_with_update_ics_attachment($eventrecord, $enrolledusers, $courseurl->out(), true, $seqnum);
         }
 
     }
@@ -202,7 +224,7 @@ class observer {
                 return;
         }
         $courseurl = new \moodle_url('/course/view.php', ['id' => $courseid]);
-        send_mail_with_ics_attachment($eventrecord, $users, $courseurl->out(), true, 0);
+        local_icalsender_send_mail_with_ics_attachment($eventrecord, $users, $courseurl->out(), true, 0);
         local_icalsender_insert_event($eventid, $eventrecord->name);   // Insert record into ics_event_log.
     }
 
@@ -265,7 +287,7 @@ class observer {
             $seqnum = local_icalsender_get_sequence_number($eventid) + 1;
         }
 
-        send_mail_with_update_ics_attachment($eventrecord, $users, $courseurl->out(), false, $seqnum);
+        local_icalsender_send_mail_with_update_ics_attachment($eventrecord, $users, $courseurl->out(), false, $seqnum);
         local_icalsender_set_sequence_number($eventid, $seqnum);
     }
 
@@ -307,7 +329,7 @@ class observer {
             $eventrecord->location = '';
             $courseurl = new \moodle_url('/course/view.php', ['id' => $courseid]);
 
-            send_mail_with_delete_ics_attachment($eventrecord, $users, $courseurl->out(), true, $seqnum);
+            local_icalsender_send_mail_with_delete_ics_attachment($eventrecord, $users, $courseurl->out(), true, $seqnum);
             local_icalsender_delete_event($eventid);
 
         } else {
