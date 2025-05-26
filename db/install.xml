@@ -4,17 +4,17 @@
     xsi:noNamespaceSchemaLocation="../../../lib/xmldb/xmldb.xsd"
 >
   <TABLES>
-    <TABLE NAME="ics_event_log" COMMENT="This table contains list events for which an iCAL event was sent">
+    <TABLE NAME="icalsender_ics_event_log" COMMENT="This table contains list events for which an iCAL event was sent">
       <FIELDS>
         <FIELD NAME="id" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="true"/>
         <FIELD NAME="eventid" TYPE="int" LENGTH="10"  NOTNULL="true" SEQUENCE="false" COMMENT="The id of the event"/>
         <FIELD NAME="eventname" TYPE="text"  NOTNULL="false" SEQUENCE="false" COMMENT="The name of the event"/>
         <FIELD NAME="seqnum" TYPE="int"  LENGTH="10" NOTNULL="false" SEQUENCE="false" COMMENT="The sequence number used in the iCal event"/>
-        <FIELD NAME="senttime" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="false" COMMENT="Time iCAL event was sent"/>                
+        <FIELD NAME="senttime" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="false" COMMENT="Time iCAL event was sent"/>
       </FIELDS>
       <KEYS>
         <KEY NAME="primary" TYPE="primary" FIELDS="id"/>
       </KEYS>
-    </TABLE>    
+    </TABLE>
   </TABLES>
 </XMLDB>

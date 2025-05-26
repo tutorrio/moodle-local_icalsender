@@ -96,9 +96,9 @@ final class observer_test extends \advanced_testcase {
         $this->assertDebuggingNotCalled(); // If you want to ensure no unexpected debug output.
         observer::calendar_event_created($eventobj);
 
-        // Assert that the event was logged in ics_event_log.
-        $log = $DB->get_record('ics_event_log', ['eventid' => $eventid]);
-        $this->assertNotEmpty($log, 'Event should be logged in ics_event_log');
+        // Assert that the event was logged in icalsender_ics_event_log.
+        $log = $DB->get_record('icalsender_ics_event_log', ['eventid' => $eventid]);
+        $this->assertNotEmpty($log, 'Event should be logged in icalsender_ics_event_log');
         $this->assertEquals($event->name, $log->eventname);
     }
 
@@ -151,7 +151,7 @@ final class observer_test extends \advanced_testcase {
         $eventid = $DB->insert_record('event', $event);
 
         // Pretend the event was previously sent and logged.
-        $DB->insert_record('ics_event_log', [
+        $DB->insert_record('icalsender_ics_event_log', [
             'eventid' => $eventid,
             'eventname' => $event->name,
             'seqnum' => 0,
@@ -178,8 +178,8 @@ final class observer_test extends \advanced_testcase {
         observer::calendar_event_deleted($eventobj);
 
         // Check that the log record has been removed.
-        $logexists = $DB->record_exists('ics_event_log', ['eventid' => $eventid]);
-        $this->assertFalse($logexists, 'Event should be deleted from ics_event_log');
+        $logexists = $DB->record_exists('icalsender_ics_event_log', ['eventid' => $eventid]);
+        $this->assertFalse($logexists, 'Event should be deleted from icalsender_ics_event_log');
     }
 
     /**
@@ -228,7 +228,7 @@ final class observer_test extends \advanced_testcase {
         $eventid = $DB->insert_record('event', $event);
 
         // Simulate the event has already been logged.
-        $DB->insert_record('ics_event_log', [
+        $DB->insert_record('icalsender_ics_event_log', [
             'eventid' => $eventid,
             'eventname' => $event->name,
             'seqnum' => 0,
@@ -255,7 +255,7 @@ final class observer_test extends \advanced_testcase {
         observer::calendar_event_updated($eventobj);
 
         // Check sequence was incremented.
-        $newseq = $DB->get_field('ics_event_log', 'seqnum', ['eventid' => $eventid]);
+        $newseq = $DB->get_field('icalsender_ics_event_log', 'seqnum', ['eventid' => $eventid]);
         $this->assertEquals(1, $newseq, 'Sequence number should be incremented after update');
     }
 }

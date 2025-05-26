@@ -13,6 +13,13 @@
 //
 // You should have received a copy of the GNU General Public License
 // along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
+/**
+ * Unit tests for locallib.php functions.
+ *
+ * @package    local_icalsender
+ * @copyright  2025 Mario Vitale <mario.vitale@tutorrio.com>
+ * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
+ */
 
 defined('MOODLE_INTERNAL') || die();
 
@@ -46,13 +53,7 @@ if (!function_exists('local_icalsender_send_ics_mail_from_noreply')) {
 }
 require_once($CFG->dirroot . '/local/icalsender/locallib.php');
 
-/**
- * Unit tests for locallib.php functions.
- *
- * @package    local_icalsender
- * @copyright  2025 Mario Vitale <mario.vitale@tutorrio.com>
- * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
- */
+
 final class local_icalsender_locallib_test extends TestCase {
 
     /**
