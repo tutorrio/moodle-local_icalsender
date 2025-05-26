@@ -225,7 +225,7 @@ class observer {
         }
         $courseurl = new \moodle_url('/course/view.php', ['id' => $courseid]);
         local_icalsender_send_mail_with_ics_attachment($eventrecord, $users, $courseurl->out(), true, 0);
-        local_icalsender_insert_event($eventid, $eventrecord->name);   // Insert record into local_icalsender_ics_event_log.
+        local_icalsender_insert_event($eventid, $eventrecord->name);   // Insert record into local_icalsender_ics_events.
     }
 
 
@@ -280,7 +280,7 @@ class observer {
         }
         $courseurl = new \moodle_url('/course/view.php', ['id' => $courseid]);
 
-        if (!$DB->record_exists('local_icalsender_ics_event_log', ['eventid' => $eventid])) {
+        if (!$DB->record_exists('local_icalsender_ics_events', ['eventid' => $eventid])) {
             local_icalsender_insert_event($eventid, $eventrecord->name);
             $seqnum = 0;
         } else {
@@ -307,8 +307,8 @@ class observer {
         // The $event->objectid is the event's ID in the 'event' table.
         $eventid = $event->objectid;
 
-        // Query the local_icalsender_ics_event_log table to check if the eventid matches one of the events we have sent out an ICS invite.
-        if ($DB->record_exists('local_icalsender_ics_event_log', ['eventid' => $eventid])) {
+        // Query the local_icalsender_ics_events table to check if the eventid matches one of the events we have sent out an ICS invite.
+        if ($DB->record_exists('local_icalsender_ics_events', ['eventid' => $eventid])) {
             $eventname = local_icalsender_get_event_name($eventid);
             $seqnum = local_icalsender_get_sequence_number($eventid) + 1;
 

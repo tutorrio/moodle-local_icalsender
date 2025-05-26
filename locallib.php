@@ -380,7 +380,7 @@ if (!function_exists('local_icalsender_send_ics_mail_from_noreply')) {
 
 
 /**
- * Inserts a new event log entry into the local_icalsender_ics_event_log table.
+ * Inserts a new event log entry into the local_icalsender_ics_events table.
  *
  * @param int $eventid Event ID.
  * @param string $eventname Event name.
@@ -390,7 +390,7 @@ function local_icalsender_insert_event($eventid, $eventname) {
     global $DB;
 
     try {
-        if ($DB->record_exists('local_icalsender_ics_event_log', ['eventid' => (int)$eventid])) {
+        if ($DB->record_exists('local_icalsender_ics_events', ['eventid' => (int)$eventid])) {
             return;
         }
 
@@ -400,7 +400,7 @@ function local_icalsender_insert_event($eventid, $eventname) {
         $record->seqnum = 0;
         $record->senttime = time();
 
-        $id = $DB->insert_record('local_icalsender_ics_event_log', $record);
+        $id = $DB->insert_record('local_icalsender_ics_events', $record);
     } catch (dml_exception $e) {
         debugging("icalsender: Insert of eventid $eventid failed: " . $e->getMessage(), DEBUG_DEVELOPER);
     }
@@ -409,7 +409,7 @@ function local_icalsender_insert_event($eventid, $eventname) {
 }
 
 /**
- * Deletes an event log entry from the local_icalsender_ics_event_log table.
+ * Deletes an event log entry from the local_icalsender_ics_events table.
  *
  * @param int $eventid Event ID.
  * @return void
@@ -417,7 +417,7 @@ function local_icalsender_insert_event($eventid, $eventname) {
 function local_icalsender_delete_event($eventid) {
     global $DB;
     try {
-        $DB->delete_records('local_icalsender_ics_event_log', ['eventid' => $eventid]);
+        $DB->delete_records('local_icalsender_ics_events', ['eventid' => $eventid]);
     } catch (dml_exception $e) {
         debugging("icalsender: delete of eventid $eventid failed: " . $e->getMessage(), DEBUG_DEVELOPER);
     }
@@ -427,7 +427,7 @@ function local_icalsender_delete_event($eventid) {
 
 
 /**
- * Retrieves the event name from the local_icalsender_ics_event_log table for a given event ID.
+ * Retrieves the event name from the local_icalsender_ics_events table for a given event ID.
  *
  * @param int $eventid Event ID.
  * @return string|null Event name, or null if not found.
@@ -436,7 +436,7 @@ function local_icalsender_get_event_name($eventid) {
     global $DB;
 
     try {
-        $eventname = $DB->get_field('local_icalsender_ics_event_log', 'eventname', ['eventid' => $eventid], MUST_EXIST);
+        $eventname = $DB->get_field('local_icalsender_ics_events', 'eventname', ['eventid' => $eventid], MUST_EXIST);
     } catch (dml_exception $e) {
         debugging("icalsender: retrieval eventname of eventid $eventid failed: " . $e->getMessage(), DEBUG_DEVELOPER);
     }
@@ -445,7 +445,7 @@ function local_icalsender_get_event_name($eventid) {
 
 
 /**
- * Retrieves the sequence number from the local_icalsender_ics_event_log table for a given event ID.
+ * Retrieves the sequence number from the local_icalsender_ics_events table for a given event ID.
  *
  * @param int $eventid Event ID.
  * @return int|null Sequence number, or null if not found.
@@ -453,7 +453,7 @@ function local_icalsender_get_event_name($eventid) {
 function local_icalsender_get_sequence_number($eventid) {
     global $DB;
     try {
-        $seqnum = $DB->get_field('local_icalsender_ics_event_log', 'seqnum', ['eventid' => $eventid], MUST_EXIST);
+        $seqnum = $DB->get_field('local_icalsender_ics_events', 'seqnum', ['eventid' => $eventid], MUST_EXIST);
     } catch (dml_exception $e) {
         debugging("icalsender: retrieval seqnum of eventid $eventid failed: " . $e->getMessage(), DEBUG_DEVELOPER);
     }
@@ -462,7 +462,7 @@ function local_icalsender_get_sequence_number($eventid) {
 
 
 /**
- * Sets the sequence number for a given event in the local_icalsender_ics_event_log table.
+ * Sets the sequence number for a given event in the local_icalsender_ics_events table.
  *
  * @param int $eventid Event ID.
  * @param int $seqnum Sequence number to set.
@@ -471,7 +471,7 @@ function local_icalsender_get_sequence_number($eventid) {
 function local_icalsender_set_sequence_number($eventid, $seqnum) {
     global $DB;
     try {
-        $DB->set_field('local_icalsender_ics_event_log', 'seqnum', $seqnum, ['eventid' => $eventid]);
+        $DB->set_field('local_icalsender_ics_events', 'seqnum', $seqnum, ['eventid' => $eventid]);
     } catch (dml_exception $e) {
         debugging("icalsender: retieval seqnum of eventid $eventid failed: " . $e->getMessage(), DEBUG_DEVELOPER);
     }
