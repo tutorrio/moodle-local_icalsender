@@ -217,9 +217,15 @@ final class local_icalsender_locallib_test extends TestCase {
         $this->assertStringContainsString('LOCATION:Test Room', $ics);
         $this->assertStringContainsString('DESCRIPTION:This is a test event.', $ics);
         $this->assertStringContainsString('ORGANIZER;CN=LMS Organizer:mailto:organizer@example.com', $ics);
-        $this->assertStringContainsString('ATTENDEE;CN=Carol Taylor;ROLE=CHAIR;PARTSTAT=ACCEPTED;RSVP=TRUE:mailto:carol@example.com', $ics);
-        $this->assertStringContainsString('ATTENDEE;CN=Alice Smith;ROLE=REQ-PARTICIPANT;PARTSTAT=NEEDS-ACTION;RSVP=TRUE:mailto:alice@example.com', $ics);
-        $this->assertStringContainsString('ATTENDEE;CN=Bob Jones;ROLE=REQ-PARTICIPANT;PARTSTAT=NEEDS-ACTION;RSVP=TRUE:mailto:bob@example.com', $ics);
+        $this->assertStringContainsString(
+                'ATTENDEE;CN=Carol Taylor;ROLE=CHAIR;PARTSTAT=ACCEPTED;RSVP=TRUE:mailto:carol@example.com',
+                $ics);
+        $this->assertStringContainsString(
+                'ATTENDEE;CN=Alice Smith;ROLE=REQ-PARTICIPANT;PARTSTAT=NEEDS-ACTION;RSVP=TRUE:mailto:alice@example.com',
+                $ics);
+        $this->assertStringContainsString(
+                'ATTENDEE;CN=Bob Jones;ROLE=REQ-PARTICIPANT;PARTSTAT=NEEDS-ACTION;RSVP=TRUE:mailto:bob@example.com',
+                $ics);
         $this->assertStringContainsString('SEQUENCE:1', $ics);
         $this->assertStringContainsString('END:VCALENDAR', $ics);
         return;
@@ -273,9 +279,15 @@ final class local_icalsender_locallib_test extends TestCase {
         $this->assertStringContainsString('LOCATION:Update Room', $ics);
         $this->assertStringContainsString('DESCRIPTION:This is an updated event.', $ics);
         $this->assertStringContainsString('ORGANIZER;CN=Frank Green:mailto:frank@example.com', $ics);
-        $this->assertStringContainsString('ATTENDEE;CN=Frank Green;ROLE=CHAIR;PARTSTAT=ACCEPTED;RSVP=TRUE:mailto:frank@example.com', $ics);
-        $this->assertStringContainsString('ATTENDEE;CN=Dave Brown;ROLE=REQ-PARTICIPANT;PARTSTAT=NEEDS-ACTION;RSVP=TRUE:mailto:dave@example.com', $ics);
-        $this->assertStringContainsString('ATTENDEE;CN=Eve White;ROLE=REQ-PARTICIPANT;PARTSTAT=NEEDS-ACTION;RSVP=TRUE:mailto:eve@example.com', $ics);
+        $this->assertStringContainsString(
+            'ATTENDEE;CN=Frank Green;ROLE=CHAIR;PARTSTAT=ACCEPTED;RSVP=TRUE:mailto:frank@example.com',
+            $ics);
+        $this->assertStringContainsString(
+            'ATTENDEE;CN=Dave Brown;ROLE=REQ-PARTICIPANT;PARTSTAT=NEEDS-ACTION;RSVP=TRUE:mailto:dave@example.com',
+            $ics);
+        $this->assertStringContainsString(
+            'ATTENDEE;CN=Eve White;ROLE=REQ-PARTICIPANT;PARTSTAT=NEEDS-ACTION;RSVP=TRUE:mailto:eve@example.com',
+            $ics);
         $this->assertStringContainsString('SEQUENCE:2', $ics);
         $this->assertStringContainsString('STATUS:CONFIRMED', $ics);
         $this->assertStringContainsString('END:VCALENDAR', $ics);

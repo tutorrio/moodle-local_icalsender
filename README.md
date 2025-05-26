@@ -36,7 +36,7 @@ Currently not supported:
 
 Once installed, the plugin will automatically handle the specified events and send emails as configured. No additional setup is required.
 
-This plugin creates 1 table in the database `icalsender_ics_event_log` which will contain the calendar invites that this plugin has acted upon. It needs to keep some state of these events to handle properly eventual updates to the event.
+This plugin creates 1 table in the database `local_icalsender_ics_event_log` which will contain the calendar invites that this plugin has acted upon. It needs to keep some state of these events to handle properly eventual updates to the event.
 
 
 
