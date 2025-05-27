@@ -21,5 +21,18 @@
  * @copyright  2025 Mario Vitale <mario.vitale@tutorrio.com>
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
+$string['cancel'] = 'Hello {$a->name},<br><br>'
+    .'One of your calendar events has been cancelled: {$a->eventname} for course {$a->url}.<br><br>'
+    .'Regards,<br>Your LMS';
+$string['invite'] = 'Hello {$a->name},<br><br>'
+    .'You have an event or training coming up: {$a->eventname} scheduled on {$a->date} for course {$a->url}<br>'
+    .'Please add this invite to your calendar to stay in the loop.<br><br>'
+    .'Regards,<br>Your LMS';
 $string['pluginname'] = 'iCal Sender';
 $string['privacy:metadata'] = 'The iCalsender local plugin only stores calendar event data.';
+$string['subjectcancel'] = 'Cancelling LMS event {$a->eventname}';
+$string['subjectinvite'] = 'New LMS Event {$a->eventname} on {$a->date}';
+$string['subjectupdate'] = 'Update LMS Event {$a->eventname} on {$a->date}';
+$string['update'] = 'Hello {$a->name},<br><br>'
+    . 'Your event or training has been updated: {$a->eventname} scheduled on {$a->date} for course {$a->url}.<br><br>'
+    . 'Regards,<br>Your LMS';
