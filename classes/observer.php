@@ -16,7 +16,6 @@
 
 namespace local_icalsender;
 
-
 /**
  * Observers used in icalsender.
  *
@@ -307,7 +306,7 @@ class observer {
         // The $event->objectid is the event's ID in the 'event' table.
         $eventid = $event->objectid;
 
-        // Query the local_icalsender_ics_events table to check if the eventid matches one of the events we have sent out an ICS invite.
+        // Query the DB to check if the eventid matches one of the events we have sent out an ICS invite for.
         if ($DB->record_exists('local_icalsender_ics_events', ['eventid' => $eventid])) {
             $eventname = local_icalsender_get_event_name($eventid);
             $seqnum = local_icalsender_get_sequence_number($eventid) + 1;

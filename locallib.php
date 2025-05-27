@@ -236,6 +236,7 @@ function local_icalsender_send_mail_with_ics_attachment($eventrecord, $users, $u
     $subject = "New LMS Event {$eventrecord->name} on $eventdate";
     $desc = local_icalsender_remove_newlines($eventrecord->description);
     $from = \core_user::get_noreply_user();
+    $mailer = new \local_icalsender\mailer();
 
     if ($organizeralso == true ) {
         $message   = "Hello {$USER->firstname},<br><br>"
@@ -245,7 +246,7 @@ function local_icalsender_send_mail_with_ics_attachment($eventrecord, $users, $u
 
         // Sent to organizer.
         $icsdataorganizer = local_icalsender_generate_ics($eventrecord, $desc, $users, $USER, $from, $seqnumber, true);
-        local_icalsender_send_ics_mail_from_noreply($USER, $subject, $message, $icsdataorganizer);
+        $mailer->local_icalsender_send_ics_mail_from_noreply($USER, $subject, $message, $icsdataorganizer);
     }
     foreach ($users as $user) {
         $message   = "Hello {$user->firstname},<br><br>"
@@ -255,7 +256,7 @@ function local_icalsender_send_mail_with_ics_attachment($eventrecord, $users, $u
 
         $icsdataattendee  = local_icalsender_generate_ics($eventrecord, $desc, $users, $USER, $from, $seqnumber, false);
         if ($USER->email != $user->email ) {   // If mail == USER , skip since that's the organizer.
-            local_icalsender_send_ics_mail_from_noreply($user, $subject, $message, $icsdataattendee);
+            $mailer->local_icalsender_send_ics_mail_from_noreply($user, $subject, $message, $icsdataattendee);
         }
     }
 
@@ -279,6 +280,7 @@ function local_icalsender_send_mail_with_delete_ics_attachment($eventrecord, $us
     $subject = "Cancelling LMS event {$eventrecord->name}";
     $desc = local_icalsender_remove_newlines($eventrecord->description);
     $from = \core_user::get_noreply_user();
+    $mailer = new \local_icalsender\mailer();
 
     if ($organizeralso == true ) {
         $message   = "Hello {$USER->firstname},<br><br>"
@@ -287,7 +289,7 @@ function local_icalsender_send_mail_with_delete_ics_attachment($eventrecord, $us
 
         // Delete also for organizer since the complete calendar event is deleted.
         $icsdataorganizer = local_icalsender_generate_cancel_ics($eventrecord, $desc, $USER, $from->email, $seqnumber);
-        local_icalsender_send_ics_mail_from_noreply($USER, $subject, $message, $icsdataorganizer);
+        $mailer->local_icalsender_send_ics_mail_from_noreply($USER, $subject, $message, $icsdataorganizer);
     }
 
     $icsdataattendee = local_icalsender_generate_cancel_ics($eventrecord, $desc, $USER, $USER->email, $seqnumber);
@@ -297,7 +299,7 @@ function local_icalsender_send_mail_with_delete_ics_attachment($eventrecord, $us
             . "One of your calendar events has been cancelled: '{$eventrecord->name}' for course $url.<br><br>"
             . "Regards,<br>Your LMS";
 
-            local_icalsender_send_ics_mail_from_noreply($user, $subject, $message, $icsdataattendee);
+            $mailer->local_icalsender_send_ics_mail_from_noreply($user, $subject, $message, $icsdataattendee);
         }
     }
 
@@ -321,72 +323,29 @@ function local_icalsender_send_mail_with_update_ics_attachment($eventrecord, $us
     $eventdate = userdate($eventrecord->timestart);
     $subject = "Update LMS Event {$eventrecord->name} on $eventdate";
     $messageorganizer   = "Hello {$USER->firstname},<br><br>"
-               . "Your event or training has been updated: '{$eventrecord->name}' scheduled on {$eventdate} for course $url.<br><br>"
+               . "Your event or training has been updated: '{$eventrecord->name}' "
+               . "scheduled on {$eventdate} for course $url.<br><br>"
                . "Regards,<br>Your LMS";
     $from = \core_user::get_noreply_user();
     $desc = local_icalsender_remove_newlines($eventrecord->description);
+    $mailer = new \local_icalsender\mailer();
 
     $icsdataorganizer = local_icalsender_generate_update_ics($eventrecord, $desc, $users, $USER, $from, $seqnumber, true);
-    local_icalsender_send_ics_mail_from_noreply($USER, $subject, $messageorganizer, $icsdataorganizer);
+    $mailer->local_icalsender_send_ics_mail_from_noreply($USER, $subject, $messageorganizer, $icsdataorganizer);
     if ($organizeronly == false ) {      // Also send update to all other participants.
         $icsdataattendee  = local_icalsender_generate_update_ics($eventrecord, $desc, $users, $USER, $from, $seqnumber, false);
         foreach ($users as $user) {
             if ($USER->email != $user->email ) {
                 $message = "Hello {$user->firstname},<br><br>"
-                . "Your event or training has been updated: '{$eventrecord->name}' scheduled on {$eventdate} for course $url.<br><br>"
+                . "Your event or training has been updated: '{$eventrecord->name}' "
+                . "scheduled on {$eventdate} for course $url.<br><br>"
                 . "Regards,<br>Your LMS";
 
-                local_icalsender_send_ics_mail_from_noreply($user, $subject, $message, $icsdataattendee);
+                $mailer->local_icalsender_send_ics_mail_from_noreply($user, $subject, $message, $icsdataattendee);
             }
         }
     }
     return;
-}
-
-
-if (!function_exists('local_icalsender_send_ics_mail_from_noreply')) {
-    /**
-     * Sends an email with an ICS file attachment from the noreply user.
-     *
-     * @param object $user Recipient user object.
-     * @param string $subject Email subject.
-     * @param string $message Email message (HTML).
-     * @param string $icsdata ICS file content.
-     * @return void
-     */
-    function local_icalsender_send_ics_mail_from_noreply($user, $subject, $message, $icsdata) {
-        global $CFG;
-
-        require_once($CFG->libdir . '/filelib.php');
-        require_once($CFG->libdir . '/moodlelib.php');
-
-        $filename = 'invite.ics';
-        $filepath = $CFG->tempdir . '/' . $filename;
-        if (file_exists($filepath)) {
-            unlink($filepath);
-        }
-        file_put_contents($filepath, $icsdata);
-
-        $from = \core_user::get_noreply_user();
-        $attachments = [
-            'path' => $filepath,
-            'name' => $filename,
-            'mimetype' => 'text/calendar',
-        ];
-
-        $success = email_to_user(
-                $user,
-                $from,
-                $subject,
-                $message,
-                $message,
-                $attachments['path'],
-                $attachments['name'],
-                $attachments['mimetype']);
-        if (!$success) {
-            debugging("icalsender: failed to send mail to $user->email", DEBUG_DEVELOPER);
-        }
-    }
 }
 
 
@@ -405,7 +364,7 @@ function local_icalsender_insert_event($eventid, $eventname) {
             return;
         }
 
-        $record = new stdClass();
+        $record = new \stdClass();
         $record->eventid = $eventid;
         $record->eventname = $eventname;
         $record->seqnum = 0;

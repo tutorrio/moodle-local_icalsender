@@ -24,8 +24,6 @@
 
 namespace local_icalsender\privacy;
 
-defined('MOODLE_INTERNAL') || die();
-
 /**
  * Privacy Subsystem for icalsender implementing null_provider.
  *
