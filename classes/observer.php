@@ -204,7 +204,6 @@ class observer {
             return;  // Event is in the past, skip it.
         }
 
-
         switch ($eventrecord->eventtype) {
             case "course":
                 $courseid = $eventrecord->courseid;
