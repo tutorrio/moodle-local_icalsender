@@ -89,6 +89,9 @@ class observer {
         $courseurl = new \moodle_url('/course/view.php', ['id' => $courseid]);
         $userenrol[] = $enrolleduser;
         foreach ($events as $eventrecord) {
+            if ($eventrecord->timestart + $eventrecord->timeduration < time()) { // Check event is in the past.
+                continue;
+            }
             $eventid = $eventrecord->id;
             $seqnum = local_icalsender_get_sequence_number($eventid);
             local_icalsender_send_mail_with_ics_attachment($eventrecord, $userenrol, $courseurl->out(), false , $seqnum);
@@ -162,6 +165,10 @@ class observer {
         $courseurl = new \moodle_url('/course/view.php', ['id' => $courseid]);
         $userunenrol[] = $unenrolleduser;
         foreach ($events as $eventrecord) {
+            // Check event is in the past.
+            if ($eventrecord->timestart + $eventrecord->timeduration < time()) {
+                continue;  // Event is in the past, skip it.
+            }
             $eventid = $eventrecord->id;
             $seqnum = local_icalsender_get_sequence_number($eventid);
             // Send delete to unenrolled user.
@@ -190,6 +197,11 @@ class observer {
         if (!$eventrecord = $DB->get_record('event', ['id' => $eventid])) {
             debugging("icalsender: event id not found in DB", DEBUG_DEVELOPER);
             return;
+        }
+
+        // Check if the event is in the past. If so, do not send any notifications.
+        if ($eventrecord->timestart + $eventrecord->timeduration < time()) {
+            return;  // Event is in the past, skip it.
         }
 
         switch ($eventrecord->eventtype) {
@@ -222,6 +234,7 @@ class observer {
             default:
                 return;
         }
+
         $courseurl = new \moodle_url('/course/view.php', ['id' => $courseid]);
         local_icalsender_send_mail_with_ics_attachment($eventrecord, $users, $courseurl->out(), true, 0);
         local_icalsender_insert_event($eventid, $eventrecord->name);   // Insert record into local_icalsender_ics_events.
@@ -245,6 +258,11 @@ class observer {
         $eventid = $event->objectid;
         if (!$eventrecord = $DB->get_record('event', ['id' => $eventid])) {
             return;
+        }
+
+        // Check if the event is in the past. If so, do not send any notifications.
+        if ($eventrecord->timestart + $eventrecord->timeduration < time()) {
+            return;  // Event is in the past, skip it.
         }
 
         switch ($eventrecord->eventtype) {
