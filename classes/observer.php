@@ -1,5 +1,4 @@
 <?php
-
 // This file is part of Moodle - http://moodle.org/
 //
 // Moodle is free software: you can redistribute it and/or modify
@@ -59,7 +58,7 @@ class observer
                     WHERE   courseid = :courseid
                             AND eventtype = "course"';
             $events = $DB->get_records_sql($sql, ['courseid' => $courseid]);
-        } elseif ($event instanceof \core\event\cohort_member_added) {
+        } else if ($event instanceof \core\event\cohort_member_added) {
             $cohortid = $event->objectid;
             $enrolledusers = cohort_get_members($cohortid);
             // Only select 'course' calendar since only that event needs to be communicated to the enrolled users.
@@ -68,7 +67,7 @@ class observer
                     WHERE   courseid = :courseid
                             AND eventtype = "course"';
             $events = $DB->get_records_sql($sql, ['courseid' => $courseid]);
-        } elseif ($event instanceof \core\event\group_member_added) {
+        } else if ($event instanceof \core\event\group_member_added) {
             $groupid = $event->objectid;
             $enrolledusers = groups_get_members($groupid);
             // Only select 'group' calendar since this event only impacts group changes.
@@ -135,7 +134,7 @@ class observer
                     WHERE   courseid = :courseid
                             AND eventtype = "course"';
             $events = $DB->get_records_sql($sql, ['courseid' => $courseid]);
-        } elseif ($event instanceof \core\event\cohort_member_removed) {
+        } else if ($event instanceof \core\event\cohort_member_removed) {
             $cohortid = $event->objectid;
             $enrolledusers = cohort_get_members($cohortid);
             // Select all events..both Group and course since user is fully unenrolled from course.
@@ -144,7 +143,7 @@ class observer
                     WHERE   courseid = :courseid
                             AND eventtype = "course"';
             $events = $DB->get_records_sql($sql, ['courseid' => $courseid]);
-        } elseif ($event instanceof \core\event\group_member_removed) {
+        } else if ($event instanceof \core\event\group_member_removed) {
             $groupid = $event->objectid;
             $enrolledusers = groups_get_members($groupid);
             // Only select 'group' calendar since this event only impacts group changes.
@@ -161,7 +160,7 @@ class observer
 
         // Check if SQL query returned any calendar events.
         if (empty($events)) {
-            //debugging("icalsender: No relevant course or group calendar events found.", DEBUG_DEVELOPER);
+            // debugging("icalsender: No relevant course or group calendar events found.", DEBUG_DEVELOPER);
             return;
         }
 
@@ -216,7 +215,6 @@ class observer
                 }
                 // Get all enrolled, active  users in that course.
                 $context = \context_course::instance($courseid);
-                //$users   = get_enrolled_users($context);
                 $users = get_enrolled_users($context, '', 0, 'u.*', null, 0, 0, true); // excludes suspended users
                 break;
             case "group":
@@ -226,7 +224,6 @@ class observer
                     debugging("icalsender: missing courseid or groupid");
                     return;
                 }
-                //$users = groups_get_members($groupid);
                 $context = \context_course::instance($courseid);
                 $users   = get_enrolled_users($context, '', $groupid, 'u.*', null, 0, 0, true); // filter on groupid and excludes suspended users
                 if (empty($users)) {
@@ -291,7 +288,6 @@ class observer
                     return;
                 }
 
-                //$users = groups_get_members($groupid);
                 $context = context_course::instance($courseid);
                 $users   = get_enrolled_users($context, '', $groupid, 'u.*', null, 0, 0, true); // filter on groupid and excludes suspended users
                 if (empty($users)) {
