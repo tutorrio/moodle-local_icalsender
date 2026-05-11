@@ -1,4 +1,5 @@
 <?php
+
 // This file is part of Moodle - http://moodle.org/
 //
 // Moodle is free software: you can redistribute it and/or modify
@@ -23,9 +24,10 @@ namespace local_icalsender;
  * @copyright  2025 Mario Vitale <mario.vitale@tutorrio.com>
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
-class mailer {
-
-    public static function local_icalsender_send_ics_mail_from_noreply($user, $subject, $body, $icsdata) {
+class mailer
+{
+    public static function local_icalsender_send_ics_mail_from_noreply($user, $subject, $body, $icsdata)
+    {
         global $CFG;
 
         // Create a message object for the email.
@@ -38,7 +40,7 @@ class mailer {
         $message->fullmessage = $body;
         $message->fullmessageformat = FORMAT_MARKDOWN;
         $message->fullmessagehtml = $body;
-        //$message->smallmessage = 'small message';
+        // $message->smallmessage = 'small message';
         $message->notification = 1; // Because this is a notification generated from Moodle, not a user-to-user message
         $message->contexturl = (new \moodle_url('/course/'))->out(false); // A relevant URL for the notification
         $message->contexturlname = 'Course list'; // Link title explaining where users get to for the contexturl
@@ -55,14 +57,16 @@ class mailer {
         $filerecord->source = 'ics';
 
         $fs = get_file_storage();
-        if ($oldfile = $fs->get_file(
-            $filerecord->contextid,
-            $filerecord->component,
-            $filerecord->filearea,
-            $filerecord->itemid,
-            $filerecord->filepath,
-            $filerecord->filename
-        )) {
+        if (
+            $oldfile = $fs->get_file(
+                $filerecord->contextid,
+                $filerecord->component,
+                $filerecord->filearea,
+                $filerecord->itemid,
+                $filerecord->filepath,
+                $filerecord->filename
+            )
+        ) {
             $oldfile->delete();
         }
         $storedfile = $fs->create_file_from_string($filerecord, $icsdata);

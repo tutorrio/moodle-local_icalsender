@@ -1,4 +1,5 @@
 <?php
+
 // This file is part of Moodle - https://moodle.org/
 //
 // Moodle is free software: you can redistribute it and/or modify
@@ -21,13 +22,14 @@
  * @copyright  2025 Mario Vitale <mario.vitale@tutorrio.com>
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
+
 $string['cancel'] = 'Hello {$a->name},<br><br>'
-    .'One of your calendar events has been cancelled: {$a->eventname} for course {$a->url}.<br><br>'
-    .'Regards,<br>Your LMS';
+    . 'One of your calendar events has been cancelled: {$a->eventname} for course {$a->url}.<br><br>'
+    . 'Regards,<br>Your LMS';
 $string['invite'] = 'Hello {$a->name},<br><br>'
-    .'You have an event or training coming up: {$a->eventname} scheduled on {$a->date} for course {$a->url}<br>'
-    .'Please add this invite to your calendar to stay in the loop.<br><br>'
-    .'Regards,<br>Your LMS';
+    . 'You have an event or training coming up: {$a->eventname} scheduled on {$a->date} for course {$a->url}<br>'
+    . 'Please add this invite to your calendar to stay in the loop.<br><br>'
+    . 'Regards,<br>Your LMS';
 $string['pluginname'] = 'iCal Sender';
 $string['privacy:metadata'] = 'The iCalsender local plugin only stores calendar event data.';
 $string['subjectcancel'] = 'Cancelling LMS event {$a->eventname}';

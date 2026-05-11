@@ -1,4 +1,5 @@
 <?php
+
 // This file is part of Moodle - http://moodle.org/
 //
 // Moodle is free software: you can redistribute it and/or modify
@@ -41,7 +42,8 @@
  * @param int $oldversion The old version of icalsender in the DB.
  * @return bool
  */
-function xmldb_local_icalsender_upgrade($oldversion) {
+function xmldb_local_icalsender_upgrade($oldversion)
+{
     // Automatically generated Moodle v4.1.0 release upgrade line.
     // Put any upgrade step following this.
 

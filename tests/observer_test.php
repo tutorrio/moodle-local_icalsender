@@ -1,4 +1,5 @@
 <?php
+
 // This file is part of Moodle - http://moodle.org/
 //
 // Moodle is free software: you can redistribute it and/or modify
@@ -23,13 +24,14 @@ namespace local_icalsender;
  * @copyright  2025 Mario Vitale <mario.vitale@tutorrio.com>
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
-final class observer_test extends \advanced_testcase {
-
+final class observer_test extends \advanced_testcase
+{
     /**
      * Test calendar_event_created observer.
      * @covers \local_icalsender\helper::test_calendar_event_created_course_event
      */
-    public function test_calendar_event_created_course_event(): void {
+    public function test_calendar_event_created_course_event(): void
+    {
         global $DB, $CFG;
 
         // Ensure required Moodle libs are loaded for static analysis and runtime.
@@ -106,7 +108,8 @@ final class observer_test extends \advanced_testcase {
      * Test calendar delete
      * @covers \local_icalsender\helper::test_calendar_event_deleted_course_event
      */
-    public function test_calendar_event_deleted_course_event(): void {
+    public function test_calendar_event_deleted_course_event(): void
+    {
         global $DB, $CFG;
 
         require_once($CFG->dirroot . '/calendar/lib.php');
@@ -186,7 +189,8 @@ final class observer_test extends \advanced_testcase {
      * Test calender update
      * @covers \local_icalsender\helper::test_calendar_event_updated_course_event
      */
-    public function test_calendar_event_updated_course_event(): void {
+    public function test_calendar_event_updated_course_event(): void
+    {
         global $DB, $CFG;
 
         require_once($CFG->dirroot . '/calendar/lib.php');
