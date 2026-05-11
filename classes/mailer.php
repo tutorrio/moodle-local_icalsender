@@ -1,5 +1,4 @@
 <?php
-
 // This file is part of Moodle - http://moodle.org/
 //
 // Moodle is free software: you can redistribute it and/or modify
@@ -26,8 +25,7 @@ namespace local_icalsender;
  */
 class mailer
 {
-    public static function local_icalsender_send_ics_mail_from_noreply($user, $subject, $body, $icsdata)
-    {
+    public static function local_icalsender_send_ics_mail_from_noreply($user, $subject, $body, $icsdata) {
         global $CFG;
 
         // Create a message object for the email.

@@ -35,7 +35,6 @@ class observer
      *   The event object containing enrollment details.
      */
     public static function user_enrolled($event)
-    {
         global $DB;
         global $CFG;
         require_once($CFG->dirroot . '/local/icalsender/locallib.php');
@@ -110,8 +109,7 @@ class observer
      * @param \core\event\user_enrolment_deleted|\core\event\cohort_member_removed|\core\event\group_member_removed $event
      *   The event object containing unenrollment details.
      */
-    public static function user_unenrolled($event)
-    {
+    public static function user_unenrolled($event) {
         global $DB;
         global $CFG;
         require_once($CFG->dirroot . '/local/icalsender/locallib.php');
@@ -189,8 +187,7 @@ class observer
      * @param \core\event\calendar_event_created $event
      *   The event object containing details of the created calendar event.
      */
-    public static function calendar_event_created(\core\event\calendar_event_created $event)
-    {
+    public static function calendar_event_created(\core\event\calendar_event_created $event) {
         global $DB;
         global $CFG;
         require_once($CFG->dirroot . '/local/icalsender/locallib.php');
@@ -253,8 +250,7 @@ class observer
      * @param \core\event\calendar_event_updated $event
      *   The event object containing details of the updated calendar event.
      */
-    public static function calendar_event_updated(\core\event\calendar_event_updated $event)
-    {
+    public static function calendar_event_updated(\core\event\calendar_event_updated $event) {
         global $DB;
         global $CFG;
         require_once($CFG->dirroot . '/local/icalsender/locallib.php');
@@ -322,8 +318,7 @@ class observer
      * @param \core\event\calendar_event_deleted $event
      *   The event object containing details of the deleted calendar event.
      */
-    public static function calendar_event_deleted(\core\event\calendar_event_deleted $event)
-    {
+    public static function calendar_event_deleted(\core\event\calendar_event_deleted $event) {
         global $DB;
         global $CFG;
         require_once($CFG->dirroot . '/local/icalsender/locallib.php');
