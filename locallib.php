@@ -276,6 +276,7 @@ function local_icalsender_send_mail_with_ics_attachment($eventrecord, $users, $u
 function local_icalsender_send_mail_with_delete_ics_attachment($eventrecord, $users, $url, $organizeralso, $seqnumber ) {
     global $USER;
 
+    error_log("icalsender: local_icalsender_send_mail_with_delete_ics_attachment", 0);
     $subject = get_string('subjectcancel', 'local_icalsender', (object)['eventname' => $eventrecord->name]);
     $desc = local_icalsender_remove_newlines($eventrecord->description);
     $from = \core_user::get_noreply_user();
@@ -300,6 +301,7 @@ function local_icalsender_send_mail_with_delete_ics_attachment($eventrecord, $us
             mailer::local_icalsender_send_ics_mail_from_noreply($user, $subject, $message, $icsdataattendee);
         }
     }
+    error_log("icalsender: local_icalsender_send_mail_with_delete_ics_attachment DONE", 0);
     return;
 }
 

@@ -36,3 +36,4 @@ $string['subjectupdate'] = 'Update LMS Event {$a->eventname} on {$a->date}';
 $string['update'] = 'Hello {$a->name},<br><br>'
     . 'Your event or training has been updated: {$a->eventname} scheduled on {$a->date} for course {$a->url}.<br><br>'
     . 'Regards,<br>Your LMS';
+$string['messageprovider:calendar_event'] = 'Calendar event';

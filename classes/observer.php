@@ -142,6 +142,7 @@ class observer {
                             AND eventtype = "course"';
             $events = $DB->get_records_sql($sql, ['courseid' => $courseid]);
         } else if ( $event instanceof \core\event\group_member_removed ) {
+            debugging("icalsender: group_member_removed", DEBUG_DEVELOPER);
             $groupid = $event->objectid;
             $enrolledusers = groups_get_members($groupid);
             // Only select 'group' calendar since this event only impacts group changes.
@@ -158,7 +159,7 @@ class observer {
 
         // Check if SQL query returned any calendar events.
         if (empty($events)) {
-            debugging("icalsender: No relevant course or group calendar events found.", DEBUG_DEVELOPER);
+            //debugging("icalsender: No relevant course or group calendar events found.", DEBUG_DEVELOPER);
             return;
         }
 
@@ -211,9 +212,10 @@ class observer {
                     debugging("icalsender: course event detected but no courseid", DEBUG_DEVELOPER);
                     return;
                 }
-                // Get all enrolled users in that course.
+                // Get all enrolled, active  users in that course.
                 $context = \context_course::instance($courseid);
-                $users   = get_enrolled_users($context);
+                //$users   = get_enrolled_users($context);
+                $users = get_enrolled_users($context, '', 0, 'u.*',null,0, 0, true); // excludes suspended users
                 break;
             case "group":
                 $courseid = $eventrecord->courseid;
@@ -222,7 +224,9 @@ class observer {
                     debugging("icalsender: missing courseid or groupid");
                     return;
                 }
-                $users = groups_get_members($groupid);
+                //$users = groups_get_members($groupid);
+                $context = \context_course::instance($courseid);
+                $users   = get_enrolled_users($context, '', $groupid, 'u.*',null,0, 0, true); // filter on groupid and excludes suspended users
                 if (empty($users)) {
                     debugging("icalsender: no users in group", DEBUG_DEVELOPER);
                     return;
@@ -272,9 +276,9 @@ class observer {
                     debugging("icalsender: course event detected but no courseid", DEBUG_DEVELOPER);
                     return;
                 }
-                // Get all enrolled users in that course.
+                // Get all enrolled, active users in that course.
                 $context = \context_course::instance($courseid);
-                $users = get_enrolled_users($context);
+                $users = get_enrolled_users($context, '', 0, 'u.*',null,0, 0, true); // excludes suspended users
                 break;
             case "group":
                 $courseid = $eventrecord->courseid;
@@ -283,7 +287,10 @@ class observer {
                     debugging("icalsender: missing courseid or groupid", DEBUG_DEVELOPER);
                     return;
                 }
-                $users = groups_get_members($groupid);
+
+                //$users = groups_get_members($groupid);
+                $context = context_course::instance($courseid);
+                $users   = get_enrolled_users($context, '', $groupid, 'u.*',null,0, 0, true); // filter on groupid and excludes suspended users
                 if (empty($users)) {
                     debugging("icalsender: no users in group", DEBUG_DEVELOPER);
                     return;
@@ -321,9 +328,7 @@ class observer {
         global $CFG;
         require_once($CFG->dirroot . '/local/icalsender/locallib.php');
 
-        // The $event->objectid is the event's ID in the 'event' table.
         $eventid = $event->objectid;
-
         // Query the DB to check if the eventid matches one of the events we have sent out an ICS invite for.
         if ($DB->record_exists('local_icalsender_ics_events', ['eventid' => $eventid])) {
             $eventname = local_icalsender_get_event_name($eventid);
@@ -335,13 +340,17 @@ class observer {
             $course = $DB->get_record('course', ['id' => $courseid], 'fullname');
 
             $context = \context_course::instance($courseid);
-            $users   = get_enrolled_users($context);
+            $users = get_enrolled_users($context, '', 0, 'u.*',null,0, 0, true); // excludes suspended users
             $eventrecord = new \stdClass();
             $eventrecord->id = $eventid;
             $eventrecord->name = $eventname;
             $eventrecord->description = "Cancelling LMS Event $eventname for $course->fullname";
             $eventrecord->timestart = $event->other['timestart'];
-            $eventrecord->timeduration = $event->other['timeduration'];
+            if (isset($event->other['timeduration'])) {
+                $eventrecord->timeduration = $event->other['timeduration'];
+            } else {
+                $eventrecord->timeduration = 0;
+            }
             // Location information is lost since already removed from DB table.Just set to empty.
             $eventrecord->location = '';
             $courseurl = new \moodle_url('/course/view.php', ['id' => $courseid]);
