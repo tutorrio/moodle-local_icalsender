@@ -142,7 +142,6 @@ class observer {
                             AND eventtype = "course"';
             $events = $DB->get_records_sql($sql, ['courseid' => $courseid]);
         } else if ( $event instanceof \core\event\group_member_removed ) {
-            debugging("icalsender: group_member_removed", DEBUG_DEVELOPER);
             $groupid = $event->objectid;
             $enrolledusers = groups_get_members($groupid);
             // Only select 'group' calendar since this event only impacts group changes.
