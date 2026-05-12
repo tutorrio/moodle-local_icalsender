@@ -25,9 +25,14 @@ namespace local_icalsender;
  */
 class mailer
 {
-
     /**
-     * Sends mail using the Moodle messaging system with an ICS file attachment. The email is sent from the noreply user to the specified user.
+     * Sends mail using the Moodle messaging system with an ICS file attachment.
+     * The email is sent from the noreply user to the specified user.
+     *
+     * @param \stdClass $user The recipient user object.
+     * @param string $subject The subject of the email.
+     * @param string $body The body of the email (can be in markdown format).
+     * @param string $icsdata The content of the ICS file to be attached.
      *
      */
     public static function local_icalsender_send_ics_mail_from_noreply($user, $subject, $body, $icsdata) {
