@@ -26,5 +26,5 @@ defined('MOODLE_INTERNAL') || die();
 $plugin->component = 'local_icalsender';
 $plugin->version  = 2026051104;
 $plugin->requires = 2021051704.00;
-$plugin->release = 'v1.3';
+$plugin->release = 'v1.4';
 $plugin->maturity = MATURITY_BETA;
