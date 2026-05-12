@@ -233,29 +233,38 @@ function local_icalsender_send_mail_with_ics_attachment($eventrecord, $users, $u
     global $USER;
 
     $eventdate = userdate($eventrecord->timestart);
-    $subject = get_string('subjectinvite', 'local_icalsender',
-                (object)[ 'eventname' => $eventrecord->name,
-                          'date' => $eventdate]);
+    $subject = get_string(
+        'subjectinvite',
+        'local_icalsender',
+        (object)[ 'eventname' => $eventrecord->name,
+        'date' => $eventdate]
+    );
     $desc = local_icalsender_remove_newlines($eventrecord->description);
     $from = \core_user::get_noreply_user();
 
-    if ($organizeralso == true ) {   // Sent to organizer.
-        $message   = get_string('invite', 'local_icalsender',
-                    (object)[   'name' => $USER->firstname,
+    if ($organizeralso == true) {   // Sent to organizer.
+        $message   = get_string(
+            'invite',
+            'local_icalsender',
+            (object)[   'name' => $USER->firstname,
                                 'eventname' => $eventrecord->name,
                                 'date' => $eventdate,
-                                'url' => $url]);
+            'url' => $url]
+        );
         $icsdataorganizer = local_icalsender_generate_ics($eventrecord, $desc, $users, $USER, $from, $seqnumber, true);
         mailer::local_icalsender_send_ics_mail_from_noreply($USER, $subject, $message, $icsdataorganizer);
     }
     foreach ($users as $user) {
-        $message   = get_string('invite', 'local_icalsender',
-                    (object)[   'name' => $user->firstname,
+        $message   = get_string(
+            'invite',
+            'local_icalsender',
+            (object)[   'name' => $user->firstname,
                                 'eventname' => $eventrecord->name,
                                 'date' => $eventdate,
-                                'url' => $url]);
+            'url' => $url]
+        );
         $icsdataattendee  = local_icalsender_generate_ics($eventrecord, $desc, $users, $USER, $from, $seqnumber, false);
-        if ($USER->email != $user->email ) {   // If mail == USER , skip since that's the organizer.
+        if ($USER->email != $user->email) {   // If mail == USER , skip since that's the organizer.
             mailer::local_icalsender_send_ics_mail_from_noreply($user, $subject, $message, $icsdataattendee);
         }
     }
@@ -273,18 +282,21 @@ function local_icalsender_send_mail_with_ics_attachment($eventrecord, $users, $u
  * @param int $seqnumber Sequence number for the event.
  * @return void
  */
-function local_icalsender_send_mail_with_delete_ics_attachment($eventrecord, $users, $url, $organizeralso, $seqnumber ) {
+function local_icalsender_send_mail_with_delete_ics_attachment($eventrecord, $users, $url, $organizeralso, $seqnumber) {
     global $USER;
 
     $subject = get_string('subjectcancel', 'local_icalsender', (object)['eventname' => $eventrecord->name]);
     $desc = local_icalsender_remove_newlines($eventrecord->description);
     $from = \core_user::get_noreply_user();
 
-    if ($organizeralso == true ) {
-        $message   = get_string(    'cancel', 'local_icalsender',
-                    (object)[       'name' => $USER->firstname,
+    if ($organizeralso == true) {
+        $message   = get_string(
+            'cancel',
+            'local_icalsender',
+            (object)[       'name' => $USER->firstname,
                                     'eventname' => $eventrecord->name,
-                                    'url' => $url]);
+            'url' => $url]
+        );
         // Delete also for organizer since the complete calendar event is deleted.
         $icsdataorganizer = local_icalsender_generate_cancel_ics($eventrecord, $desc, $USER, $from->email, $seqnumber);
         mailer::local_icalsender_send_ics_mail_from_noreply($USER, $subject, $message, $icsdataorganizer);
@@ -292,11 +304,14 @@ function local_icalsender_send_mail_with_delete_ics_attachment($eventrecord, $us
 
     $icsdataattendee = local_icalsender_generate_cancel_ics($eventrecord, $desc, $USER, $USER->email, $seqnumber);
     foreach ($users as $user) {
-        if ($USER->email != $user->email ) {
-            $message   = get_string('cancel', 'local_icalsender',
-                        (object)[   'name' => $user->firstname,
+        if ($USER->email != $user->email) {
+            $message   = get_string(
+                'cancel',
+                'local_icalsender',
+                (object)[   'name' => $user->firstname,
                                     'eventname' => $eventrecord->name,
-                                    'url' => $url]);
+                'url' => $url]
+            );
             mailer::local_icalsender_send_ics_mail_from_noreply($user, $subject, $message, $icsdataattendee);
         }
     }
@@ -319,25 +334,31 @@ function local_icalsender_send_mail_with_update_ics_attachment($eventrecord, $us
 
     $eventdate = userdate($eventrecord->timestart);
     $subject = get_string('subjectupdate', 'local_icalsender', (object)['eventname' => $eventrecord->name, 'date' => $eventdate]);
-    $messageorganizer   = get_string(   'update', 'local_icalsender',
-                            (object)[   'name' => $USER->firstname,
+    $messageorganizer   = get_string(
+        'update',
+        'local_icalsender',
+        (object)[   'name' => $USER->firstname,
                                         'eventname' => $eventrecord->name,
                                         'date' => $eventdate,
-                                        'url' => $url]);
+        'url' => $url]
+    );
     $from = \core_user::get_noreply_user();
     $desc = local_icalsender_remove_newlines($eventrecord->description);
 
     $icsdataorganizer = local_icalsender_generate_update_ics($eventrecord, $desc, $users, $USER, $from, $seqnumber, true);
     mailer::local_icalsender_send_ics_mail_from_noreply($USER, $subject, $messageorganizer, $icsdataorganizer);
-    if ($organizeronly == false ) {      // Also send update to all other participants.
+    if ($organizeronly == false) {      // Also send update to all other participants.
         $icsdataattendee  = local_icalsender_generate_update_ics($eventrecord, $desc, $users, $USER, $from, $seqnumber, false);
         foreach ($users as $user) {
-            if ($USER->email != $user->email ) {
-                $message = get_string(  'update', 'local_icalsender',
-                            (object)[   'name' => $user->firstname,
+            if ($USER->email != $user->email) {
+                $message = get_string(
+                    'update',
+                    'local_icalsender',
+                    (object)[   'name' => $user->firstname,
                                         'eventname' => $eventrecord->name,
                                         'date' => $eventdate,
-                                        'url' => $url]);
+                    'url' => $url]
+                );
                 mailer::local_icalsender_send_ics_mail_from_noreply($user, $subject, $message, $icsdataattendee);
             }
         }

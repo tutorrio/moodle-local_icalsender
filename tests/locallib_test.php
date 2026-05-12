@@ -35,8 +35,8 @@ require_once($CFG->dirroot . '/local/icalsender/locallib.php');
  * @copyright  2025 Mario Vitale <mario.vitale@tutorrio.com>
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
-final class locallib_test extends \advanced_testcase {
-
+final class locallib_test extends \advanced_testcase
+{
     /**
      * Test local_icalsender_format_ics_datetime returns correct ICS datetime string for known timestamps.
      * @covers \local_icalsender\helper::local_icalsender_format_ics_datetime_basic
@@ -201,7 +201,7 @@ final class locallib_test extends \advanced_testcase {
         $this->assertStringContainsString('LOCATION:Test Room', $ics);
         $this->assertStringContainsString('DESCRIPTION:This is a test event.', $ics);
         $this->assertStringContainsString('ORGANIZER;CN=LMS Organizer:mailto:organizer@example.com', $ics);
-        $this->assertStringContainsString('ATTENDEE;CN=Carol Taylor;',  $ics);
+        $this->assertStringContainsString('ATTENDEE;CN=Carol Taylor;', $ics);
         $this->assertStringContainsString('ATTENDEE;CN=Alice Smith;', $ics);
         $this->assertStringContainsString('ATTENDEE;CN=Bob Jones;', $ics);
         $this->assertStringContainsString('SEQUENCE:1', $ics);
@@ -305,4 +305,3 @@ final class locallib_test extends \advanced_testcase {
         return;
     }
 }
-

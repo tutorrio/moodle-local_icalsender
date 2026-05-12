@@ -23,8 +23,8 @@ namespace local_icalsender;
  * @copyright  2025 Mario Vitale <mario.vitale@tutorrio.com>
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
-class observer {
-
+class observer
+{
     /**
      * Handles user enrollment events (manual, cohort, or group).
      *
@@ -48,7 +48,7 @@ class observer {
             return;
         }
 
-        if ($event instanceof \core\event\user_enrolment_created ) {
+        if ($event instanceof \core\event\user_enrolment_created) {
             $context = \context_course::instance($courseid);
             $enrolledusers   = get_enrolled_users($context);
             // Only select 'course' calendar since only that event needs to be communicated to the enrolled users.
@@ -66,7 +66,7 @@ class observer {
                     WHERE   courseid = :courseid
                             AND eventtype = "course"';
             $events = $DB->get_records_sql($sql, ['courseid' => $courseid]);
-        } else if ( $event instanceof \core\event\group_member_added ) {
+        } else if ($event instanceof \core\event\group_member_added) {
             $groupid = $event->objectid;
             $enrolledusers = groups_get_members($groupid);
             // Only select 'group' calendar since this event only impacts group changes.
@@ -94,7 +94,7 @@ class observer {
             }
             $eventid = $eventrecord->id;
             $seqnum = local_icalsender_get_sequence_number($eventid);
-            local_icalsender_send_mail_with_ics_attachment($eventrecord, $userenrol, $courseurl->out(), false , $seqnum);
+            local_icalsender_send_mail_with_ics_attachment($eventrecord, $userenrol, $courseurl->out(), false, $seqnum);
             local_icalsender_send_mail_with_update_ics_attachment($eventrecord, $enrolledusers, $courseurl->out(), true, $seqnum);
         }
     }
@@ -123,7 +123,7 @@ class observer {
             return;
         }
 
-        if ($event instanceof \core\event\user_enrolment_deleted ) {
+        if ($event instanceof \core\event\user_enrolment_deleted) {
             $context = \context_course::instance($courseid);
             $enrolledusers   = get_enrolled_users($context);
             // Select all events..both Group and course since user is fully unenrolled from course.
@@ -141,7 +141,7 @@ class observer {
                     WHERE   courseid = :courseid
                             AND eventtype = "course"';
             $events = $DB->get_records_sql($sql, ['courseid' => $courseid]);
-        } else if ( $event instanceof \core\event\group_member_removed ) {
+        } else if ($event instanceof \core\event\group_member_removed) {
             $groupid = $event->objectid;
             $enrolledusers = groups_get_members($groupid);
             // Only select 'group' calendar since this event only impacts group changes.
@@ -158,7 +158,6 @@ class observer {
 
         // Check if SQL query returned any calendar events.
         if (empty($events)) {
-            debugging("icalsender: No relevant course or group calendar events found.", DEBUG_DEVELOPER);
             return;
         }
 
@@ -172,11 +171,10 @@ class observer {
             $eventid = $eventrecord->id;
             $seqnum = local_icalsender_get_sequence_number($eventid);
             // Send delete to unenrolled user.
-            local_icalsender_send_mail_with_delete_ics_attachment($eventrecord, $userunenrol, $courseurl->out() , false, $seqnum);
+            local_icalsender_send_mail_with_delete_ics_attachment($eventrecord, $userunenrol, $courseurl->out(), false, $seqnum);
             // Send update to organizer.
             local_icalsender_send_mail_with_update_ics_attachment($eventrecord, $enrolledusers, $courseurl->out(), true, $seqnum);
         }
-
     }
 
     /**
@@ -211,9 +209,9 @@ class observer {
                     debugging("icalsender: course event detected but no courseid", DEBUG_DEVELOPER);
                     return;
                 }
-                // Get all enrolled users in that course.
+                // Get all enrolled, active  users in that course.
                 $context = \context_course::instance($courseid);
-                $users   = get_enrolled_users($context);
+                $users = get_enrolled_users($context, '', 0, 'u.*', null, 0, 0, true); // Excludes suspended users.
                 break;
             case "group":
                 $courseid = $eventrecord->courseid;
@@ -222,7 +220,9 @@ class observer {
                     debugging("icalsender: missing courseid or groupid");
                     return;
                 }
-                $users = groups_get_members($groupid);
+                $context = \context_course::instance($courseid);
+                // Filter on groupid and excludes suspended users.
+                $users   = get_enrolled_users($context, '', $groupid, 'u.*', null, 0, 0, true);
                 if (empty($users)) {
                     debugging("icalsender: no users in group", DEBUG_DEVELOPER);
                     return;
@@ -272,9 +272,9 @@ class observer {
                     debugging("icalsender: course event detected but no courseid", DEBUG_DEVELOPER);
                     return;
                 }
-                // Get all enrolled users in that course.
+                // Get all enrolled, active users in that course.
                 $context = \context_course::instance($courseid);
-                $users = get_enrolled_users($context);
+                $users = get_enrolled_users($context, '', 0, 'u.*', null, 0, 0, true); // Excludes suspended users.
                 break;
             case "group":
                 $courseid = $eventrecord->courseid;
@@ -283,7 +283,10 @@ class observer {
                     debugging("icalsender: missing courseid or groupid", DEBUG_DEVELOPER);
                     return;
                 }
-                $users = groups_get_members($groupid);
+
+                $context = context_course::instance($courseid);
+                // Filter on groupid and excludes suspended users.
+                $users   = get_enrolled_users($context, '', $groupid, 'u.*', null, 0, 0, true);
                 if (empty($users)) {
                     debugging("icalsender: no users in group", DEBUG_DEVELOPER);
                     return;
@@ -321,9 +324,7 @@ class observer {
         global $CFG;
         require_once($CFG->dirroot . '/local/icalsender/locallib.php');
 
-        // The $event->objectid is the event's ID in the 'event' table.
         $eventid = $event->objectid;
-
         // Query the DB to check if the eventid matches one of the events we have sent out an ICS invite for.
         if ($DB->record_exists('local_icalsender_ics_events', ['eventid' => $eventid])) {
             $eventname = local_icalsender_get_event_name($eventid);
@@ -335,20 +336,23 @@ class observer {
             $course = $DB->get_record('course', ['id' => $courseid], 'fullname');
 
             $context = \context_course::instance($courseid);
-            $users   = get_enrolled_users($context);
+            $users = get_enrolled_users($context, '', 0, 'u.*', null, 0, 0, true); // Excludes suspended users.
             $eventrecord = new \stdClass();
             $eventrecord->id = $eventid;
             $eventrecord->name = $eventname;
             $eventrecord->description = "Cancelling LMS Event $eventname for $course->fullname";
             $eventrecord->timestart = $event->other['timestart'];
-            $eventrecord->timeduration = $event->other['timeduration'];
+            if (isset($event->other['timeduration'])) {
+                $eventrecord->timeduration = $event->other['timeduration'];
+            } else {
+                $eventrecord->timeduration = 0;
+            }
             // Location information is lost since already removed from DB table.Just set to empty.
             $eventrecord->location = '';
             $courseurl = new \moodle_url('/course/view.php', ['id' => $courseid]);
 
             local_icalsender_send_mail_with_delete_ics_attachment($eventrecord, $users, $courseurl->out(), true, $seqnum);
             local_icalsender_delete_event($eventid);
-
         } else {
             debugging("icalsender: event $eventid not found in DB ... ignore calendar delete event", DEBUG_DEVELOPER);
             return;

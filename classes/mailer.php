@@ -23,48 +23,69 @@ namespace local_icalsender;
  * @copyright  2025 Mario Vitale <mario.vitale@tutorrio.com>
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
-class mailer {
-
+class mailer
+{
     /**
-     * Sends an email with an ICS file attachment from the noreply user.
+     * Sends mail using the Moodle messaging system with an ICS file attachment.
+     * The email is sent from the noreply user to the specified user.
      *
-     * @param object $user Recipient user object.
-     * @param string $subject Email subject.
-     * @param string $message Email message (HTML).
-     * @param string $icsdata ICS file content.
-     * @return void
+     * @param \stdClass $user The recipient user object.
+     * @param string $subject The subject of the email.
+     * @param string $body The body of the email (can be in markdown format).
+     * @param string $icsdata The content of the ICS file to be attached.
+     *
      */
-    public static function local_icalsender_send_ics_mail_from_noreply($user, $subject, $message, $icsdata) {
+    public static function local_icalsender_send_ics_mail_from_noreply($user, $subject, $body, $icsdata) {
         global $CFG;
 
-        require_once($CFG->libdir . '/filelib.php');
-        require_once($CFG->libdir . '/moodlelib.php');
+        // Create a message object for the email.
+        $message = new \core\message\message();
+        $message->component = 'local_icalsender';
+        $message->name = 'calendar_event'; // Your notification name from message.php.
+        $message->userfrom = \core_user::get_noreply_user(); // If the message is 'from' a specific user you can set them here.
+        $message->userto = $user;
+        $message->subject = $subject;
+        $message->fullmessage = $body;
+        $message->fullmessageformat = FORMAT_MARKDOWN;
+        $message->fullmessagehtml = $body;
+        $message->notification = 1; // Because this is a notification generated from Moodle, not a user-to-user message.
+        $message->contexturl = (new \moodle_url('/course/'))->out(false); // A relevant URL for the notification.
+        $message->contexturlname = 'Course list'; // Link title explaining where users get to for the contexturl.
 
-        $filename = 'invite.ics';
-        $filepath = $CFG->tempdir . '/' . $filename;
-        if (file_exists($filepath)) {
-            unlink($filepath);
+        // Attachments.
+        $usercontext = \context_user::instance($user->id);
+        $filerecord = new \stdClass();
+        $filerecord->contextid = $usercontext->id;
+        $filerecord->component = 'user';
+        $filerecord->filearea = 'private';
+        $filerecord->itemid = 0;
+        $filerecord->filepath = '/';
+        $filerecord->filename = 'invite.ics';
+        $filerecord->source = 'ics';
+
+        $fs = get_file_storage();
+        if (
+            $oldfile = $fs->get_file(
+                $filerecord->contextid,
+                $filerecord->component,
+                $filerecord->filearea,
+                $filerecord->itemid,
+                $filerecord->filepath,
+                $filerecord->filename
+            )
+        ) {
+            $oldfile->delete();
         }
-        file_put_contents($filepath, $icsdata);
+        $storedfile = $fs->create_file_from_string($filerecord, $icsdata);
+        $message->attachment = $storedfile;
+        $message->attachname = 'invite.ics';
 
-        $from = \core_user::get_noreply_user();
-        $attachments = [
-            'path' => $filepath,
-            'name' => $filename,
-            'mimetype' => 'text/calendar',
-        ];
-
-        $success = email_to_user(
-                $user,
-                $from,
-                $subject,
-                $message,
-                $message,
-                $attachments['path'],
-                $attachments['name'],
-                $attachments['mimetype']);
-        if (!$success) {
-            debugging("icalsender: failed to send mail to $user->email", DEBUG_DEVELOPER);
+        // Actually send the message.
+        $messageid = message_send($message);
+        if ($messageid === false) {
+            debugging('local_icalsender: message_send returned false', DEBUG_DEVELOPER);
+            return false;
         }
+        return;
     }
 }

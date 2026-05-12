@@ -23,8 +23,8 @@ namespace local_icalsender;
  * @copyright  2025 Mario Vitale <mario.vitale@tutorrio.com>
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
-final class observer_test extends \advanced_testcase {
-
+final class observer_test extends \advanced_testcase
+{
     /**
      * Test calendar_event_created observer.
      * @covers \local_icalsender\helper::test_calendar_event_created_course_event

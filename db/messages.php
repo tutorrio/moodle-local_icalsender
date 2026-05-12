@@ -15,32 +15,20 @@
 // along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 
 /**
- * Privacy Subsystem implementation for icalsender.
+ * Mail function used in icalsender.
  *
  * @package    local_icalsender
  * @copyright  2025 Mario Vitale <mario.vitale@tutorrio.com>
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 
-namespace local_icalsender\privacy;
+defined('MOODLE_INTERNAL') || die();
 
-/**
- * Privacy Subsystem for icalsender implementing null_provider.
- *
- * @copyright  2025 Mario Vitale <mario.vitale@tutorrio.com>
- * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
- */
-class provider implements
-    // This plugin does not store any personal user data.
-    \core_privacy\local\metadata\null_provider
-{
-    /**
-     * Get the language string identifier with the component's language
-     * file to explain why this plugin stores no data.
-     *
-     * @return  string
-     */
-    public static function get_reason(): string {
-        return 'privacy:metadata';
-    }
-}
+$messageproviders = [
+    'calendar_event' => [
+        'defaults' => [
+            'popup' => MESSAGE_PERMITTED + MESSAGE_DEFAULT_ENABLED,
+            'email' => MESSAGE_PERMITTED + MESSAGE_DEFAULT_ENABLED,
+        ],
+    ],
+];
