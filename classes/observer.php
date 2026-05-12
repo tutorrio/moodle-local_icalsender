@@ -158,7 +158,6 @@ class observer
 
         // Check if SQL query returned any calendar events.
         if (empty($events)) {
-            // debugging("icalsender: No relevant course or group calendar events found.", DEBUG_DEVELOPER);
             return;
         }
 
@@ -212,7 +211,7 @@ class observer
                 }
                 // Get all enrolled, active  users in that course.
                 $context = \context_course::instance($courseid);
-                $users = get_enrolled_users($context, '', 0, 'u.*', null, 0, 0, true); // excludes suspended users
+                $users = get_enrolled_users($context, '', 0, 'u.*', null, 0, 0, true); // Excludes suspended users.
                 break;
             case "group":
                 $courseid = $eventrecord->courseid;
@@ -222,7 +221,8 @@ class observer
                     return;
                 }
                 $context = \context_course::instance($courseid);
-                $users   = get_enrolled_users($context, '', $groupid, 'u.*', null, 0, 0, true); // filter on groupid and excludes suspended users
+                // Filter on groupid and excludes suspended users.
+                $users   = get_enrolled_users($context, '', $groupid, 'u.*', null, 0, 0, true);
                 if (empty($users)) {
                     debugging("icalsender: no users in group", DEBUG_DEVELOPER);
                     return;
@@ -274,7 +274,7 @@ class observer
                 }
                 // Get all enrolled, active users in that course.
                 $context = \context_course::instance($courseid);
-                $users = get_enrolled_users($context, '', 0, 'u.*', null, 0, 0, true); // excludes suspended users
+                $users = get_enrolled_users($context, '', 0, 'u.*', null, 0, 0, true); // Excludes suspended users.
                 break;
             case "group":
                 $courseid = $eventrecord->courseid;
@@ -285,7 +285,8 @@ class observer
                 }
 
                 $context = context_course::instance($courseid);
-                $users   = get_enrolled_users($context, '', $groupid, 'u.*', null, 0, 0, true); // filter on groupid and excludes suspended users
+                // Filter on groupid and excludes suspended users.
+                $users   = get_enrolled_users($context, '', $groupid, 'u.*', null, 0, 0, true);
                 if (empty($users)) {
                     debugging("icalsender: no users in group", DEBUG_DEVELOPER);
                     return;
@@ -335,7 +336,7 @@ class observer
             $course = $DB->get_record('course', ['id' => $courseid], 'fullname');
 
             $context = \context_course::instance($courseid);
-            $users = get_enrolled_users($context, '', 0, 'u.*', null, 0, 0, true); // excludes suspended users
+            $users = get_enrolled_users($context, '', 0, 'u.*', null, 0, 0, true); // Excludes suspended users.
             $eventrecord = new \stdClass();
             $eventrecord->id = $eventid;
             $eventrecord->name = $eventname;
