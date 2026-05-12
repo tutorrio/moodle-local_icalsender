@@ -34,7 +34,7 @@ class observer
      * @param \core\event\user_enrolment_created|\core\event\cohort_member_added|\core\event\group_member_added $event
      *   The event object containing enrollment details.
      */
-    public static function user_enrolled($event)
+    public static function user_enrolled($event) {
         global $DB;
         global $CFG;
         require_once($CFG->dirroot . '/local/icalsender/locallib.php');
