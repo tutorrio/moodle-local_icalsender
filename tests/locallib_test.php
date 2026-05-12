@@ -42,8 +42,7 @@ final class locallib_test extends \advanced_testcase
      * Test local_icalsender_format_ics_datetime returns correct ICS datetime string for known timestamps.
      * @covers \local_icalsender\helper::local_icalsender_format_ics_datetime_basic
      */
-    public function test_local_icalsender_format_ics_datetime_basic(): void
-    {
+    public function test_local_icalsender_format_ics_datetime_basic(): void {
         // 2024-05-09 12:00:00 UTC
         $timestamp = 1715256000;
         $expected = '20240509T120000Z';
@@ -55,8 +54,7 @@ final class locallib_test extends \advanced_testcase
      * Test local_icalsender_format_ics_datetime returns correct ICS datetime string for midnight timestamp.
      * @covers \local_icalsender\helper::test_local_icalsender_format_ics_datetime_midnight
      */
-    public function test_local_icalsender_format_ics_datetime_midnight(): void
-    {
+    public function test_local_icalsender_format_ics_datetime_midnight(): void {
 
         // 2025-01-01 00:00:00 UTC
         $timestamp = 1735689600;
@@ -69,8 +67,7 @@ final class locallib_test extends \advanced_testcase
      * Test local_icalsender_format_ics_datetime returns correct ICS datetime string for end of year timestamp.
      * @covers \local_icalsender\helper::test_local_icalsender_format_ics_datetime_end_of_year
      */
-    public function test_local_icalsender_format_ics_datetime_end_of_year(): void
-    {
+    public function test_local_icalsender_format_ics_datetime_end_of_year(): void {
 
         // 2023-12-31 23:59:59 UTC
         $timestamp = 1704067199;
@@ -83,8 +80,7 @@ final class locallib_test extends \advanced_testcase
      * Test local_icalsender_format_ics_datetime returns correct ICS datetime string for Unix epoch timestamp.
      * @covers \local_icalsender\helper::test_local_icalsender_format_ics_datetime_epoch
      */
-    public function test_local_icalsender_format_ics_datetime_epoch(): void
-    {
+    public function test_local_icalsender_format_ics_datetime_epoch(): void {
 
         $timestamp = 0;
         $expected = '19700101T000000Z';
@@ -96,8 +92,7 @@ final class locallib_test extends \advanced_testcase
      * Test local_icalsender_remove_newlines removes all types of newlines and carriage returns.
      * @covers \local_icalsender\helper::test_local_icalsender_remove_newlines_mixed
      */
-    public function test_local_icalsender_remove_newlines_mixed(): void
-    {
+    public function test_local_icalsender_remove_newlines_mixed(): void {
 
         $input = "Line1\r\nLine2\nLine3\rLine4";
         $expected = "Line1Line2Line3Line4";
@@ -109,8 +104,7 @@ final class locallib_test extends \advanced_testcase
      * Test local_icalsender_remove_newlines removes string containing only newlines and carriage returns.
      * @covers \local_icalsender\helper::test_local_icalsender_remove_newlines_only_newlines
      */
-    public function test_local_icalsender_remove_newlines_only_newlines(): void
-    {
+    public function test_local_icalsender_remove_newlines_only_newlines(): void {
 
         $input = "\n\r\n\r";
         $expected = "";
@@ -122,8 +116,7 @@ final class locallib_test extends \advanced_testcase
      * Test local_icalsender_remove_newlines returns unchanged string when no newlines are present.
      * @covers \local_icalsender\helper::test_local_icalsender_remove_newlines_no_newlines
      */
-    public function test_local_icalsender_remove_newlines_no_newlines(): void
-    {
+    public function test_local_icalsender_remove_newlines_no_newlines(): void {
 
         $input = "NoNewlinesHere";
         $expected = "NoNewlinesHere";
@@ -135,8 +128,7 @@ final class locallib_test extends \advanced_testcase
      * Test local_icalsender_remove_newlines returns empty string when input is empty.
      * @covers \local_icalsender\helper::test_local_icalsender_remove_newlines_empty_string
      */
-    public function test_local_icalsender_remove_newlines_empty_string(): void
-    {
+    public function test_local_icalsender_remove_newlines_empty_string(): void {
 
         $input = "";
         $expected = "";
@@ -148,8 +140,7 @@ final class locallib_test extends \advanced_testcase
      * Test local_icalsender_remove_newlines removes newlines at the start and end of the string.
      * @covers \local_icalsender\helper::test_local_icalsender_remove_newlines_newlines_at_edges
      */
-    public function test_local_icalsender_remove_newlines_newlines_at_edges(): void
-    {
+    public function test_local_icalsender_remove_newlines_newlines_at_edges(): void {
 
         $input = "\nStartMiddle\r\nEnd\r";
         $expected = "StartMiddleEnd";
@@ -161,8 +152,7 @@ final class locallib_test extends \advanced_testcase
      * Test local_icalsender_generate_ics function with a basic event and attendees.
      * @covers \local_icalsender\helper::test_local_icalsender_generate_ics_basic
      */
-    public function test_local_icalsender_generate_ics_basic(): void
-    {
+    public function test_local_icalsender_generate_ics_basic(): void {
 
         // Prepare event record.
         $eventrecord = new \stdClass();
@@ -224,8 +214,7 @@ final class locallib_test extends \advanced_testcase
      * Test local_icalsender_generate_update_ics function with an updated event and attendees.
      * @covers \local_icalsender\helper::test_local_icalsender_generate_update_ics_basic
      */
-    public function test_local_icalsender_generate_update_ics_basic(): void
-    {
+    public function test_local_icalsender_generate_update_ics_basic(): void {
 
         // Prepare event record.
         $eventrecord = new \stdClass();
@@ -283,8 +272,7 @@ final class locallib_test extends \advanced_testcase
      * Test local_icalsender_generate_cancel_ics function with a cancelled event.
      * @covers \local_icalsender\helper::test_local_icalsender_generate_cancel_ics_basic
      */
-    public function test_local_icalsender_generate_cancel_ics_basic(): void
-    {
+    public function test_local_icalsender_generate_cancel_ics_basic(): void {
 
         // Prepare event record.
         $eventrecord = new \stdClass();

@@ -25,25 +25,29 @@ namespace local_icalsender;
  */
 class mailer
 {
+
+    /**
+     * Sends mail using the Moodle messaging system with an ICS file attachment. The email is sent from the noreply user to the specified user.
+     *
+     */
     public static function local_icalsender_send_ics_mail_from_noreply($user, $subject, $body, $icsdata) {
         global $CFG;
 
         // Create a message object for the email.
         $message = new \core\message\message();
         $message->component = 'local_icalsender';
-        $message->name = 'calendar_event'; // Your notification name from message.php
-        $message->userfrom = \core_user::get_noreply_user(); // If the message is 'from' a specific user you can set them here
+        $message->name = 'calendar_event'; // Your notification name from message.php.
+        $message->userfrom = \core_user::get_noreply_user(); // If the message is 'from' a specific user you can set them here.
         $message->userto = $user;
         $message->subject = $subject;
         $message->fullmessage = $body;
         $message->fullmessageformat = FORMAT_MARKDOWN;
         $message->fullmessagehtml = $body;
-        // $message->smallmessage = 'small message';
-        $message->notification = 1; // Because this is a notification generated from Moodle, not a user-to-user message
-        $message->contexturl = (new \moodle_url('/course/'))->out(false); // A relevant URL for the notification
-        $message->contexturlname = 'Course list'; // Link title explaining where users get to for the contexturl
+        $message->notification = 1; // Because this is a notification generated from Moodle, not a user-to-user message.
+        $message->contexturl = (new \moodle_url('/course/'))->out(false); // A relevant URL for the notification.
+        $message->contexturlname = 'Course list'; // Link title explaining where users get to for the contexturl.
 
-        // attachments
+        // Attachments.
         $usercontext = \context_user::instance($user->id);
         $filerecord = new \stdClass();
         $filerecord->contextid = $usercontext->id;
@@ -71,7 +75,7 @@ class mailer
         $message->attachment = $storedfile;
         $message->attachname = 'invite.ics';
 
-        // Actually send the message
+        // Actually send the message.
         $messageid = message_send($message);
         if ($messageid === false) {
             debugging('local_icalsender: message_send returned false', DEBUG_DEVELOPER);
