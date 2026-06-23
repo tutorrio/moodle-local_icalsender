@@ -34,7 +34,7 @@ $string['privacy:metadata'] = 'The iCalsender local plugin only stores calendar 
 $string['subjectcancel'] = 'Cancelling LMS event {$a->eventname}';
 $string['subjectinvite'] = 'New LMS Event {$a->eventname} on {$a->date}';
 $string['subjectupdate'] = 'Update LMS Event {$a->eventname} on {$a->date}';
+$string['messageprovider:calendar_event'] = 'Calendar event';
 $string['update'] = 'Hello {$a->name},<br><br>'
     . 'Your event or training has been updated: {$a->eventname} scheduled on {$a->date} for course {$a->url}.<br><br>'
     . 'Regards,<br>Your LMS';
-$string['messageprovider:calendar_event'] = 'Calendar event';
