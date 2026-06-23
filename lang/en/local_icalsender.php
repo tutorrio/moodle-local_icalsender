@@ -30,11 +30,19 @@ $string['invite'] = 'Hello {$a->name},<br><br>'
     . 'Please add this invite to your calendar to stay in the loop.<br><br>'
     . 'Regards,<br>Your LMS';
 $string['pluginname'] = 'iCal Sender';
-$string['privacy:metadata'] = 'The iCalsender local plugin only stores calendar event data.';
+$string['privacy:metadata:googlecalendar'] = 'When enabled for a course, event details are sent to Google Calendar.';
+$string['privacy:metadata:googlecalendar:description'] = 'The Moodle calendar event description.';
+$string['privacy:metadata:googlecalendar:end'] = 'The Moodle calendar event end time.';
+$string['privacy:metadata:googlecalendar:location'] = 'The Moodle calendar event location.';
+$string['privacy:metadata:googlecalendar:start'] = 'The Moodle calendar event start time.';
+$string['privacy:metadata:googlecalendar:summary'] = 'The Moodle calendar event name.';
+$string['messageprovider:calendar_event'] = 'Calendar event';
 $string['subjectcancel'] = 'Cancelling LMS event {$a->eventname}';
 $string['subjectinvite'] = 'New LMS Event {$a->eventname} on {$a->date}';
 $string['subjectupdate'] = 'Update LMS Event {$a->eventname} on {$a->date}';
-$string['messageprovider:calendar_event'] = 'Calendar event';
+$string['googleeventsource'] = 'View course in Moodle';
+$string['googleoauthissuerid'] = 'Google OAuth 2 service';
+$string['googleoauthissuerid_desc'] = 'Select the Google OAuth 2 service whose connected system account can manage shared calendars. Reconnect the system account after installing or upgrading this plugin so it grants the Google Calendar Events scope.';
 $string['update'] = 'Hello {$a->name},<br><br>'
     . 'Your event or training has been updated: {$a->eventname} scheduled on {$a->date} for course {$a->url}.<br><br>'
     . 'Regards,<br>Your LMS';

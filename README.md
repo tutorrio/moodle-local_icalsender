@@ -34,9 +34,19 @@ Currently not supported:
 
 ## Usage
 
-Once installed, the plugin will automatically handle the specified events and send emails as configured. No additional setup is required.
+Once installed, the plugin will automatically handle the specified events and send emails as configured.
 
-This plugin creates 1 table in the database `local_icalsender_ics_events` which will contain the calendar invites that this plugin has acted upon. It needs to keep some state of these events to handle properly eventual updates to the event.
+### Optional Google Calendar synchronisation
 
+Course and group events can additionally be created, updated and deleted in a shared Google calendar:
 
+1. Create a Google OAuth 2 service under **Site administration > Server > OAuth 2 services** and connect its system account.
+2. After installing or upgrading this plugin, reconnect that system account so Google grants the `calendar.events` scope requested by the plugin.
+3. Select the service under **Site administration > Plugins > Local plugins > iCal Sender**.
+4. Create a course custom field with the short name `calid`. Set its value on each participating course to the target Google calendar ID.
+5. Give the OAuth system account permission to manage events in each target calendar.
+
+The existing ICS email flow is unchanged. Google synchronisation is attempted only for course/group events whose course has a non-empty `calid`. Google API errors are reported through Moodle debugging and do not stop ICS delivery.
+
+This plugin stores ICS delivery state in `local_icalsender_ics_events` and Google event mappings in `local_icalsender_gcal_events`.
 

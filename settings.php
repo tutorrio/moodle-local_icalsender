@@ -15,16 +15,30 @@
 // along with Moodle.  If not, see <https://www.gnu.org/licenses/>.
 
 /**
- * Class which contains information about the plugins version.
+ * Plugin settings.
  *
- * @package local_icalsender
+ * @package    local_icalsender
  * @copyright  2025 Mario Vitale <mario.vitale@tutorrio.com>
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 
 defined('MOODLE_INTERNAL') || die();
-$plugin->component = 'local_icalsender';
-$plugin->version  = 2026062300;
-$plugin->requires = 2021051704.00;
-$plugin->release = 'v1.5';
-$plugin->maturity = MATURITY_BETA;
+
+if ($hassiteconfig) {
+    $settings = new admin_settingpage('local_icalsender', get_string('pluginname', 'local_icalsender'));
+    $ADMIN->add('localplugins', $settings);
+
+    $issuers = [0 => get_string('none')];
+    foreach (\core\oauth2\api::get_all_issuers(true) as $issuer) {
+        if ($issuer->get('servicetype') === 'google') {
+            $issuers[$issuer->get('id')] = $issuer->get('name');
+        }
+    }
+    $settings->add(new admin_setting_configselect(
+        'local_icalsender/googleoauthissuerid',
+        get_string('googleoauthissuerid', 'local_icalsender'),
+        get_string('googleoauthissuerid_desc', 'local_icalsender'),
+        0,
+        $issuers
+    ));
+}

@@ -202,6 +202,7 @@ class observer
             return;  // Event is in the past, skip it.
         }
 
+        $skipics = false;
         switch ($eventrecord->eventtype) {
             case "course":
                 $courseid = $eventrecord->courseid;
@@ -225,7 +226,7 @@ class observer
                 $users   = get_enrolled_users($context, '', $groupid, 'u.*', null, 0, 0, true);
                 if (empty($users)) {
                     debugging("icalsender: no users in group", DEBUG_DEVELOPER);
-                    return;
+                    $skipics = true;
                 }
                 break;
             case "site":
@@ -236,6 +237,10 @@ class observer
         }
 
         $courseurl = new \moodle_url('/course/view.php', ['id' => $courseid]);
+        google_calendar::event_created($eventrecord, $courseurl->out(false));
+        if ($skipics) {
+            return;
+        }
         local_icalsender_send_mail_with_ics_attachment($eventrecord, $users, $courseurl->out(), true, 0);
         local_icalsender_insert_event($eventid, $eventrecord->name);   // Insert record into local_icalsender_ics_events.
     }
@@ -262,9 +267,15 @@ class observer
 
         // Check if the event is in the past. If so, do not send any notifications.
         if ($eventrecord->timestart + $eventrecord->timeduration < time()) {
+            // Keep an existing shared-calendar event accurate even when it is moved into the past.
+            if (in_array($eventrecord->eventtype, ['course', 'group'], true) && !empty($eventrecord->courseid)) {
+                $courseurl = new \moodle_url('/course/view.php', ['id' => $eventrecord->courseid]);
+                google_calendar::event_updated($eventrecord, $courseurl->out(false), false);
+            }
             return;  // Event is in the past, skip it.
         }
 
+        $skipics = false;
         switch ($eventrecord->eventtype) {
             case "course":
                 $courseid = $eventrecord->courseid;
@@ -284,12 +295,12 @@ class observer
                     return;
                 }
 
-                $context = context_course::instance($courseid);
+                $context = \context_course::instance($courseid);
                 // Filter on groupid and excludes suspended users.
                 $users   = get_enrolled_users($context, '', $groupid, 'u.*', null, 0, 0, true);
                 if (empty($users)) {
                     debugging("icalsender: no users in group", DEBUG_DEVELOPER);
-                    return;
+                    $skipics = true;
                 }
                 break;
             case "site":
@@ -299,6 +310,10 @@ class observer
                 return;
         }
         $courseurl = new \moodle_url('/course/view.php', ['id' => $courseid]);
+        google_calendar::event_updated($eventrecord, $courseurl->out(false));
+        if ($skipics) {
+            return;
+        }
 
         if (!$DB->record_exists('local_icalsender_ics_events', ['eventid' => $eventid])) {
             local_icalsender_insert_event($eventid, $eventrecord->name);
@@ -325,6 +340,8 @@ class observer
         require_once($CFG->dirroot . '/local/icalsender/locallib.php');
 
         $eventid = $event->objectid;
+        // Google state is independent of the ICS log and must be cleaned up even if that log is missing.
+        google_calendar::event_deleted((int)$eventid);
         // Query the DB to check if the eventid matches one of the events we have sent out an ICS invite for.
         if ($DB->record_exists('local_icalsender_ics_events', ['eventid' => $eventid])) {
             $eventname = local_icalsender_get_event_name($eventid);

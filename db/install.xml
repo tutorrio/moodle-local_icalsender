@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8" ?>
-<XMLDB PATH="local/icalsender/db" VERSION="20231206" COMMENT="XMLDB file for Moodle local/icalsender"
+<XMLDB PATH="local/icalsender/db" VERSION="20260623" COMMENT="XMLDB file for Moodle local/icalsender"
     xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
     xsi:noNamespaceSchemaLocation="../../../lib/xmldb/xmldb.xsd"
 >
@@ -15,6 +15,22 @@
       <KEYS>
         <KEY NAME="primary" TYPE="primary" FIELDS="id"/>
       </KEYS>
+    </TABLE>
+    <TABLE NAME="local_icalsender_gcal_events" COMMENT="Maps Moodle events to events created in Google Calendar">
+      <FIELDS>
+        <FIELD NAME="id" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="true"/>
+        <FIELD NAME="eventid" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="false" COMMENT="Moodle calendar event ID"/>
+        <FIELD NAME="calendarid" TYPE="char" LENGTH="255" NOTNULL="true" SEQUENCE="false" COMMENT="Google calendar ID"/>
+        <FIELD NAME="googleeventid" TYPE="char" LENGTH="255" NOTNULL="true" SEQUENCE="false" COMMENT="Google Calendar event ID"/>
+        <FIELD NAME="timecreated" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="false"/>
+        <FIELD NAME="timemodified" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="false"/>
+      </FIELDS>
+      <KEYS>
+        <KEY NAME="primary" TYPE="primary" FIELDS="id"/>
+      </KEYS>
+      <INDEXES>
+        <INDEX NAME="eventid" UNIQUE="true" FIELDS="eventid"/>
+      </INDEXES>
     </TABLE>
   </TABLES>
 </XMLDB>
