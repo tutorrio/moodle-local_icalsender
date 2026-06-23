@@ -40,7 +40,7 @@ class google_calendar {
     }
 
     /**
-     * Create the Google event when the course has a calid custom field.
+     * Create the Google event when the course has a CalendarId custom field.
      *
      * @param \stdClass $eventrecord Moodle event record.
      * @param string $courseurl URL of the Moodle course.
@@ -155,7 +155,7 @@ class google_calendar {
     }
 
     /**
-     * Get the shared calendar ID from the course custom field named calid.
+     * Get the shared calendar ID from the course custom field named CalendarId.
      *
      * @param int $courseid Moodle course ID.
      * @return string|null Calendar ID, or null when no non-empty value is configured.
@@ -173,7 +173,7 @@ class google_calendar {
                    AND c.area = :area';
         $records = $DB->get_records_sql($sql, [
             'courseid' => $courseid,
-            'shortname' => 'calid',
+            'shortname' => 'CalendarId',
             'component' => 'core_course',
             'area' => 'course',
         ]);
