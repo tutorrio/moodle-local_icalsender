@@ -1,1 +1,4 @@
 /vendor/
+/moodle/
+/moodledata/
+/scripts/ci/
