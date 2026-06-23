@@ -59,30 +59,30 @@ The connected Google account must also have permission to modify every target ca
 
 Finally, go to **Site administration > Plugins > Local plugins > iCal Sender** and select the Google OAuth 2 service in the **Google OAuth 2 service** setting. Selecting **None** disables Google synchronisation globally without affecting ICS emails.
 
-### 2. Create the `CalendarId` course custom field
+### 2. Create the `calendarid` course custom field
 
 Google synchronisation is enabled per course through a Moodle course custom field:
 
 1. Go to **Site administration > Courses > Course custom fields**.
-2. Create a text input custom field. Its display name can be chosen freely, but its short name must be exactly `CalendarId` (including this capitalization and without spaces).
+2. Create a text input custom field. Its display name can be chosen freely, but its short name must be exactly `calendarid`.
 3. The field does not need to be required, because courses without a Google calendar can leave it empty.
-4. Edit each course that should use Google synchronisation and enter the target Google calendar ID in its `CalendarId` field.
+4. Edit each course that should use Google synchronisation and enter the target Google calendar ID in its `calendarid` field.
 
 The calendar ID can be found in Google Calendar under the calendar's **Settings and sharing > Integrate calendar > Calendar ID** section. A shared calendar ID commonly looks like `example@group.calendar.google.com`.
 
-Google synchronisation is attempted only when the course has a non-empty `CalendarId` value. A missing or empty field leaves the course on the existing ICS-only behavior.
+Google synchronisation is attempted only when the course has a non-empty `calendarid` value. A missing or empty field leaves the course on the existing ICS-only behavior.
 
 ### 3. Using the synchronisation
 
 After the OAuth service and course custom field are configured, no additional action is required from teachers:
 
-- Creating a future Moodle course or group event creates an event in the calendar identified by `CalendarId`.
+- Creating a future Moodle course or group event creates an event in the calendar identified by `calendarid`.
 - Updating the Moodle event updates the corresponding Google event.
 - Deleting the Moodle event deletes the corresponding Google event.
-- Changing `CalendarId` and then updating a Moodle event removes it from the previous calendar and creates it in the new calendar.
+- Changing `calendarid` and then updating a Moodle event removes it from the previous calendar and creates it in the new calendar.
 - User enrolment and unenrolment continue to affect ICS invitations, but do not create duplicate events in the shared Google calendar.
 
-The plugin stores the Google event ID and calendar ID in `local_icalsender_gcal_events` so that later updates and deletions target the correct Google event. Clearing `CalendarId` does not immediately remove events that were already synchronised. Deleting the corresponding Moodle event will still remove its mapped Google event; alternatively, move it by changing `CalendarId` to another calendar ID and updating the event.
+The plugin stores the Google event ID and calendar ID in `local_icalsender_gcal_events` so that later updates and deletions target the correct Google event. Clearing `calendarid` does not immediately remove events that were already synchronised. Deleting the corresponding Moodle event will still remove its mapped Google event; alternatively, move it by changing `calendarid` to another calendar ID and updating the event.
 
 Google API failures are isolated from the ICS email flow. With Moodle developer debugging enabled, failures are reported with messages beginning with `icalsender: Google Calendar`.
 

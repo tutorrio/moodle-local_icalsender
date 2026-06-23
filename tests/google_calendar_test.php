@@ -66,7 +66,7 @@ final class google_calendar_test extends \advanced_testcase {
     }
 
     /**
-     * Courses without the CalendarId custom field do not opt into Google sync.
+     * Courses without the calendarid custom field do not opt into Google sync.
      */
     public function test_get_course_calendar_id_without_field(): void {
         $this->resetAfterTest(true);
@@ -76,7 +76,7 @@ final class google_calendar_test extends \advanced_testcase {
     }
 
     /**
-     * A non-empty CalendarId course custom field opts the course into Google sync.
+     * A non-empty calendarid course custom field opts the course into Google sync.
      */
     public function test_get_course_calendar_id(): void {
         $this->resetAfterTest(true);
@@ -89,7 +89,7 @@ final class google_calendar_test extends \advanced_testcase {
         ]);
         $field = $generator->create_field([
             'categoryid' => $category->get('id'),
-            'shortname' => 'CalendarId',
+            'shortname' => 'calendarid',
             'type' => 'text',
         ]);
         $generator->add_instance_data($field, $course->id, ' shared@example.com ');
