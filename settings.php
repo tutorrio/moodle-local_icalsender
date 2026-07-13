@@ -28,6 +28,14 @@ if ($hassiteconfig) {
     $settings = new admin_settingpage('local_icalsender', get_string('pluginname', 'local_icalsender'));
     $ADMIN->add('localplugins', $settings);
 
+    $settings->add(new admin_setting_configselect(
+        'local_icalsender/deliverymethod',
+        get_string('deliverymethod', 'local_icalsender'),
+        get_string('deliverymethod_desc', 'local_icalsender'),
+        \local_icalsender\event_delivery::METHOD_ICS,
+        \local_icalsender\event_delivery::method_options()
+    ));
+
     $issuers = [0 => get_string('none')];
     foreach (\core\oauth2\api::get_all_issuers(true) as $issuer) {
         if ($issuer->get('servicetype') === 'google') {
@@ -41,4 +49,10 @@ if ($hassiteconfig) {
         0,
         $issuers
     ));
+    $settings->hide_if(
+        'local_icalsender/googleoauthissuerid',
+        'local_icalsender/deliverymethod',
+        'neq',
+        \local_icalsender\event_delivery::METHOD_GOOGLE_API
+    );
 }

@@ -41,6 +41,7 @@ class provider implements \core_privacy\local\metadata\provider {
         \core_privacy\local\metadata\collection $collection
     ): \core_privacy\local\metadata\collection {
         $collection->add_external_location_link('googlecalendar', [
+            'attendees' => 'privacy:metadata:googlecalendar:attendees',
             'summary' => 'privacy:metadata:googlecalendar:summary',
             'description' => 'privacy:metadata:googlecalendar:description',
             'location' => 'privacy:metadata:googlecalendar:location',

@@ -44,10 +44,11 @@ class google_calendar {
      *
      * @param \stdClass $eventrecord Moodle event record.
      * @param string $courseurl URL of the Moodle course.
+     * @param array $users Users to add as Google Calendar attendees.
      * @return void
      */
-    public static function event_created(\stdClass $eventrecord, string $courseurl): void {
-        self::safely(function () use ($eventrecord, $courseurl): void {
+    public static function event_created(\stdClass $eventrecord, string $courseurl, array $users): void {
+        self::safely(function () use ($eventrecord, $courseurl, $users): void {
             $calendarid = self::get_course_calendar_id((int)$eventrecord->courseid);
             if ($calendarid === null) {
                 return;
@@ -56,7 +57,7 @@ class google_calendar {
             if ($service === null) {
                 return;
             }
-            $googleeventid = $service->insert($calendarid, self::event_body($eventrecord, $courseurl));
+            $googleeventid = $service->insert($calendarid, self::event_body($eventrecord, $courseurl, $users));
             self::save_mapping((int)$eventrecord->id, $calendarid, $googleeventid);
         }, 'create', (int)$eventrecord->id);
     }
@@ -66,15 +67,17 @@ class google_calendar {
      *
      * @param \stdClass $eventrecord Moodle event record.
      * @param string $courseurl URL of the Moodle course.
+     * @param array $users Users to add as Google Calendar attendees.
      * @param bool $createifmissing Create the Google event when no mapping exists.
      * @return void
      */
     public static function event_updated(
         \stdClass $eventrecord,
         string $courseurl,
+        array $users,
         bool $createifmissing = true
     ): void {
-        self::safely(function () use ($eventrecord, $courseurl, $createifmissing): void {
+        self::safely(function () use ($eventrecord, $courseurl, $users, $createifmissing): void {
             $calendarid = self::get_course_calendar_id((int)$eventrecord->courseid);
             if ($calendarid === null) {
                 return;
@@ -85,7 +88,7 @@ class google_calendar {
             }
 
             $mapping = self::get_mapping((int)$eventrecord->id);
-            $body = self::event_body($eventrecord, $courseurl);
+            $body = self::event_body($eventrecord, $courseurl, $users);
             if (!$mapping) {
                 if (!$createifmissing) {
                     return;
@@ -132,9 +135,10 @@ class google_calendar {
      *
      * @param \stdClass $eventrecord Moodle event record.
      * @param string $courseurl URL of the Moodle course.
+     * @param array $users Users to add as Google Calendar attendees.
      * @return array Google Calendar event resource.
      */
-    public static function event_body(\stdClass $eventrecord, string $courseurl): array {
+    public static function event_body(\stdClass $eventrecord, string $courseurl, array $users = []): array {
         $start = (int)$eventrecord->timestart;
         // Google requires an exclusive end. Moodle permits events with no duration.
         $end = $start + max(1, (int)$eventrecord->timeduration);
@@ -146,12 +150,42 @@ class google_calendar {
             'location' => (string)($eventrecord->location ?? ''),
             'start' => ['dateTime' => gmdate('Y-m-d\TH:i:s\Z', $start)],
             'end' => ['dateTime' => gmdate('Y-m-d\TH:i:s\Z', $end)],
+            'attendees' => self::attendees($users),
             'source' => ['title' => get_string('googleeventsource', 'local_icalsender'), 'url' => $courseurl],
             'extendedProperties' => ['private' => [
                 'moodleEventId' => (string)$eventrecord->id,
                 'moodlePlugin' => 'local_icalsender',
             ]],
         ];
+    }
+
+    /**
+     * Build a unique Google attendee list from Moodle users with valid email addresses.
+     *
+     * @param array $users Moodle user records.
+     * @return array Google Calendar attendee resources.
+     */
+    private static function attendees(array $users): array {
+        $attendees = [];
+        $seen = [];
+
+        foreach ($users as $user) {
+            $email = trim((string)($user->email ?? ''));
+            $emailkey = strtolower($email);
+            if (!filter_var($email, FILTER_VALIDATE_EMAIL) || isset($seen[$emailkey])) {
+                continue;
+            }
+
+            $attendee = ['email' => $email];
+            $displayname = fullname($user);
+            if ($displayname !== '') {
+                $attendee['displayName'] = $displayname;
+            }
+            $attendees[] = $attendee;
+            $seen[$emailkey] = true;
+        }
+
+        return $attendees;
     }
 
     /**
@@ -215,7 +249,7 @@ class google_calendar {
      * @return string Google event ID.
      */
     private function insert(string $calendarid, array $body): string {
-        $response = $this->json_request('post', self::events_url($calendarid) . '?sendUpdates=none', $body, [200, 201]);
+        $response = $this->json_request('post', self::events_url($calendarid) . '?sendUpdates=all', $body, [200, 201]);
         if (empty($response->id)) {
             throw new \runtime_exception('Google Calendar did not return an event ID.');
         }
@@ -231,7 +265,7 @@ class google_calendar {
      * @return void
      */
     private function update(string $calendarid, string $googleeventid, array $body): void {
-        $url = self::event_url($calendarid, $googleeventid) . '?sendUpdates=none';
+        $url = self::event_url($calendarid, $googleeventid) . '?sendUpdates=all';
         $this->json_request('put', $url, $body, [200]);
     }
 
@@ -243,7 +277,7 @@ class google_calendar {
      * @return void
      */
     private function delete(string $calendarid, string $googleeventid): void {
-        $url = self::event_url($calendarid, $googleeventid) . '?sendUpdates=none';
+        $url = self::event_url($calendarid, $googleeventid) . '?sendUpdates=all';
         $this->client->delete($url);
         $status = self::response_status($this->client);
         // Missing/deleted remotely already means that the desired state has been reached.

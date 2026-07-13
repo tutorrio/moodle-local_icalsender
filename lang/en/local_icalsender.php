@@ -25,9 +25,13 @@
 $string['cancel'] = 'Hello {$a->name},<br><br>'
     . 'One of your calendar events has been cancelled: {$a->eventname} for course {$a->url}.<br><br>'
     . 'Regards,<br>Your LMS';
+$string['deliverymethod'] = 'Calendar event delivery method';
+$string['deliverymethod_desc'] = 'Choose how calendar events are created and updated. Generic ICS events are sent by email and do not support the course calendarid shared-calendar feature. Google API creates, updates and deletes events through Google Calendar and is required for shared calendars configured with calendarid.';
+$string['deliverymethod_googleapi'] = 'Google Calendar API';
+$string['deliverymethod_ics'] = '(Generic) ICS events by email';
 $string['googleeventsource'] = 'View course in Moodle';
 $string['googleoauthissuerid'] = 'Google OAuth 2 service';
-$string['googleoauthissuerid_desc'] = 'Select the Google OAuth 2 service whose connected system account can manage shared calendars. Reconnect the system account after installing or upgrading this plugin so it grants the Google Calendar Events scope.';
+$string['googleoauthissuerid_desc'] = 'Used only when the delivery method is Google Calendar API. Select the Google OAuth 2 service whose connected system account can manage shared calendars. Reconnect the system account after installing or upgrading this plugin so it grants the Google Calendar Events scope.';
 $string['invite'] = 'Hello {$a->name},<br><br>'
     . 'You have an event or training coming up: {$a->eventname} scheduled on {$a->date} for course {$a->url}<br>'
     . 'Please add this invite to your calendar to stay in the loop.<br><br>'
@@ -35,6 +39,7 @@ $string['invite'] = 'Hello {$a->name},<br><br>'
 $string['messageprovider:calendar_event'] = 'Calendar event';
 $string['pluginname'] = 'iCal Sender';
 $string['privacy:metadata:googlecalendar'] = 'When enabled for a course, event details are sent to Google Calendar.';
+$string['privacy:metadata:googlecalendar:attendees'] = 'The names and email addresses of users included as event attendees.';
 $string['privacy:metadata:googlecalendar:description'] = 'The Moodle calendar event description.';
 $string['privacy:metadata:googlecalendar:end'] = 'The Moodle calendar event end time.';
 $string['privacy:metadata:googlecalendar:location'] = 'The Moodle calendar event location.';

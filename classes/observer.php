@@ -92,6 +92,10 @@ class observer
             if ($eventrecord->timestart + $eventrecord->timeduration < time()) { // Check event is in the past.
                 continue;
             }
+            if (event_delivery::uses_api()) {
+                event_delivery::event_updated($eventrecord, $courseurl->out(false), $enrolledusers);
+                continue;
+            }
             $eventid = $eventrecord->id;
             $seqnum = local_icalsender_get_sequence_number($eventid);
             local_icalsender_send_mail_with_ics_attachment($eventrecord, $userenrol, $courseurl->out(), false, $seqnum);
@@ -168,6 +172,10 @@ class observer
             if ($eventrecord->timestart + $eventrecord->timeduration < time()) {
                 continue;  // Event is in the past, skip it.
             }
+            if (event_delivery::uses_api()) {
+                event_delivery::event_updated($eventrecord, $courseurl->out(false), $enrolledusers);
+                continue;
+            }
             $eventid = $eventrecord->id;
             $seqnum = local_icalsender_get_sequence_number($eventid);
             // Send delete to unenrolled user.
@@ -237,7 +245,10 @@ class observer
         }
 
         $courseurl = new \moodle_url('/course/view.php', ['id' => $courseid]);
-        google_calendar::event_created($eventrecord, $courseurl->out(false));
+        if (event_delivery::uses_api()) {
+            event_delivery::event_created($eventrecord, $courseurl->out(false), $users);
+            return;
+        }
         if ($skipics) {
             return;
         }
@@ -268,9 +279,18 @@ class observer
         // Check if the event is in the past. If so, do not send any notifications.
         if ($eventrecord->timestart + $eventrecord->timeduration < time()) {
             // Keep an existing shared-calendar event accurate even when it is moved into the past.
-            if (in_array($eventrecord->eventtype, ['course', 'group'], true) && !empty($eventrecord->courseid)) {
+            if (
+                event_delivery::uses_api()
+                && in_array($eventrecord->eventtype, ['course', 'group'], true)
+                && !empty($eventrecord->courseid)
+            ) {
                 $courseurl = new \moodle_url('/course/view.php', ['id' => $eventrecord->courseid]);
-                google_calendar::event_updated($eventrecord, $courseurl->out(false), false);
+                $context = \context_course::instance($eventrecord->courseid);
+                $groupid = $eventrecord->eventtype === 'group' ? (int)($eventrecord->groupid ?? 0) : 0;
+                if ($eventrecord->eventtype !== 'group' || $groupid) {
+                    $users = get_enrolled_users($context, '', $groupid, 'u.*', null, 0, 0, true);
+                    event_delivery::event_updated($eventrecord, $courseurl->out(false), $users, false);
+                }
             }
             return;  // Event is in the past, skip it.
         }
@@ -310,7 +330,10 @@ class observer
                 return;
         }
         $courseurl = new \moodle_url('/course/view.php', ['id' => $courseid]);
-        google_calendar::event_updated($eventrecord, $courseurl->out(false));
+        if (event_delivery::uses_api()) {
+            event_delivery::event_updated($eventrecord, $courseurl->out(false), $users);
+            return;
+        }
         if ($skipics) {
             return;
         }
@@ -340,8 +363,10 @@ class observer
         require_once($CFG->dirroot . '/local/icalsender/locallib.php');
 
         $eventid = $event->objectid;
-        // Google state is independent of the ICS log and must be cleaned up even if that log is missing.
-        google_calendar::event_deleted((int)$eventid);
+        if (event_delivery::uses_api()) {
+            event_delivery::event_deleted((int)$eventid);
+            return;
+        }
         // Query the DB to check if the eventid matches one of the events we have sent out an ICS invite for.
         if ($DB->record_exists('local_icalsender_ics_events', ['eventid' => $eventid])) {
             $eventname = local_icalsender_get_event_name($eventid);

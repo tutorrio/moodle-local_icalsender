@@ -36,11 +36,18 @@ Currently not supported:
 
 Once installed, the plugin will automatically handle the specified events and send emails as configured.
 
-## Google Calendar synchronisation
+## Delivery methods
 
-The plugin can optionally synchronise Moodle course and group events with a shared Google calendar. This is additional to the existing ICS email flow: ICS invitations continue to be sent as before, whether Google Calendar synchronisation is enabled or not.
+The plugin supports two mutually exclusive delivery methods, configured in **Site administration > Plugins > Local plugins > iCal Sender**:
 
-When configured, creating, updating or deleting a supported Moodle calendar event performs the corresponding operation in Google Calendar. The Google event contains the Moodle event name, description, location, start and end time, and a link back to the Moodle course.
+- **Generic - ICS events by email** sends calendar invitations, updates and cancellations as ICS email attachments.
+- **API - Google Calendar** creates, updates and deletes events through the Google Calendar API.
+
+The `calendarid` shared-calendar feature is only supported by the API delivery method. When the generic ICS method is selected, course `calendarid` values are ignored and no shared-calendar API calls are made.
+
+## Google Calendar API delivery
+
+When API delivery is configured, creating, updating or deleting a supported Moodle calendar event performs the corresponding operation in Google Calendar. The Google event contains the Moodle event name, description, location, start and end time, a link back to the Moodle course, and the relevant enrolled users as attendees.
 
 ### 1. Create and configure the Google OAuth service
 
@@ -57,7 +64,7 @@ The plugin requests the Google Calendar Events scope (`https://www.googleapis.co
 
 The connected Google account must also have permission to modify every target calendar. For a shared calendar, share the calendar with the system-account email address and grant at least **Make changes to events** permission.
 
-Finally, go to **Site administration > Plugins > Local plugins > iCal Sender** and select the Google OAuth 2 service in the **Google OAuth 2 service** setting. Selecting **None** disables Google synchronisation globally without affecting ICS emails.
+Finally, go to **Site administration > Plugins > Local plugins > iCal Sender**, set **Calendar event delivery method** to **API - Google Calendar**, and select the Google OAuth 2 service in the **Google OAuth 2 service** setting. Selecting **None** prevents Google API delivery from creating, updating or deleting events.
 
 ### 2. Create the `calendarid` course custom field
 
@@ -70,7 +77,7 @@ Google synchronisation is enabled per course through a Moodle course custom fiel
 
 The calendar ID can be found in Google Calendar under the calendar's **Settings and sharing > Integrate calendar > Calendar ID** section. A shared calendar ID commonly looks like `example@group.calendar.google.com`.
 
-Google synchronisation is attempted only when the course has a non-empty `calendarid` value. A missing or empty field leaves the course on the existing ICS-only behavior.
+Google API delivery is attempted only when the course has a non-empty `calendarid` value. A missing or empty field means there is no shared calendar target for that course.
 
 ### 3. Using the synchronisation
 
@@ -80,10 +87,13 @@ After the OAuth service and course custom field are configured, no additional ac
 - Updating the Moodle event updates the corresponding Google event.
 - Deleting the Moodle event deletes the corresponding Google event.
 - Changing `calendarid` and then updating a Moodle event removes it from the previous calendar and creates it in the new calendar.
-- User enrolment and unenrolment continue to affect ICS invitations, but do not create duplicate events in the shared Google calendar.
+- Enrolled course users are included as attendees of course events; group members are included as attendees of group events.
+- User enrolment, unenrolment and group membership changes update the attendee list without creating duplicate events in the shared Google calendar.
+
+Google Calendar notification emails are enabled for these API operations (`sendUpdates=all`). Attendees therefore receive Google notifications for event creation, updates and cancellation.
 
 The plugin stores the Google event ID and calendar ID in `local_icalsender_gcal_events` so that later updates and deletions target the correct Google event. Clearing `calendarid` does not immediately remove events that were already synchronised. Deleting the corresponding Moodle event will still remove its mapped Google event; alternatively, move it by changing `calendarid` to another calendar ID and updating the event.
 
-Google API failures are isolated from the ICS email flow. With Moodle developer debugging enabled, failures are reported with messages beginning with `icalsender: Google Calendar`.
+Google API failures are isolated from Moodle calendar changes. With Moodle developer debugging enabled, failures are reported with messages beginning with `icalsender: Google Calendar`.
 
 This plugin stores ICS delivery state in `local_icalsender_ics_events` and Google event mappings in `local_icalsender_gcal_events`.

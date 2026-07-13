@@ -107,6 +107,30 @@ fi
 
 cd "$ROOT_DIR"
 
+if [[ -d "$MOODLE_DIR/public/local" ]]; then
+    MOODLE_LOCAL_DIR="$MOODLE_DIR/public/local"
+else
+    MOODLE_LOCAL_DIR="$MOODLE_DIR/local"
+fi
+MOODLE_PLUGIN_DIR="$MOODLE_LOCAL_DIR/icalsender"
+
+if [[ "$(realpath -m "$MOODLE_PLUGIN_DIR")" != "$ROOT_DIR" ]]; then
+    if ! command -v rsync >/dev/null 2>&1; then
+        printf 'rsync is required to synchronize the plugin into Moodle.\n' >&2
+        exit 2
+    fi
+    printf 'Synchronizing plugin into %s\n' "$MOODLE_PLUGIN_DIR"
+    mkdir -p "$MOODLE_PLUGIN_DIR"
+    rsync -a --delete \
+        --exclude='.git/' \
+        --exclude='moodle/' \
+        --exclude='moodledata/' \
+        --exclude='node_modules/' \
+        --exclude='scripts/ci/' \
+        --exclude='vendor/' \
+        "$ROOT_DIR/" "$MOODLE_PLUGIN_DIR/"
+fi
+
 failures=()
 advisories=()
 

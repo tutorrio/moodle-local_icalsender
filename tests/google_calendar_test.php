@@ -66,6 +66,56 @@ final class google_calendar_test extends \advanced_testcase {
     }
 
     /**
+     * Valid users are included once as Google Calendar attendees.
+     */
+    public function test_event_body_attendees(): void {
+        $event = (object)[
+            'id' => 44,
+            'name' => 'Attendee event',
+            'description' => '',
+            'timestart' => 1735689600,
+            'timeduration' => 3600,
+        ];
+        $users = [
+            (object)[
+                'firstname' => 'Alice',
+                'lastname' => 'Example',
+                'firstnamephonetic' => '',
+                'lastnamephonetic' => '',
+                'middlename' => '',
+                'alternatename' => '',
+                'email' => 'alice@example.com',
+            ],
+            (object)[
+                'firstname' => 'Duplicate',
+                'lastname' => 'Alice',
+                'firstnamephonetic' => '',
+                'lastnamephonetic' => '',
+                'middlename' => '',
+                'alternatename' => '',
+                'email' => 'ALICE@example.com',
+            ],
+            (object)[
+                'firstname' => 'Bob',
+                'lastname' => 'Example',
+                'firstnamephonetic' => '',
+                'lastnamephonetic' => '',
+                'middlename' => '',
+                'alternatename' => '',
+                'email' => 'bob@example.com',
+            ],
+            (object)['firstname' => 'Invalid', 'lastname' => 'User', 'email' => 'not-an-email'],
+        ];
+
+        $body = google_calendar::event_body($event, 'https://moodle.example/', $users);
+
+        $this->assertCount(2, $body['attendees']);
+        $this->assertSame('alice@example.com', $body['attendees'][0]['email']);
+        $this->assertSame('Alice Example', $body['attendees'][0]['displayName']);
+        $this->assertSame('bob@example.com', $body['attendees'][1]['email']);
+    }
+
+    /**
      * Courses without the calendarid custom field do not opt into Google sync.
      */
     public function test_get_course_calendar_id_without_field(): void {
