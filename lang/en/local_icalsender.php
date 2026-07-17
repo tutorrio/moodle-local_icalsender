@@ -34,12 +34,14 @@ $string['deliverymethod_ics'] = '(Generic) ICS events by email';
 $string['eventgooglesyncfailed'] = 'Google Calendar synchronisation failed';
 $string['googledelegateduser'] = 'Google delegated user';
 $string['googledelegateduser_desc'] = 'Google Workspace user email address to impersonate through domain-wide delegation. '
-    . 'The service account must have domain-wide delegation enabled and authorised for the Google Calendar Events scope.';
+    . 'Leave empty to authenticate as the service account itself. When set, the service account must have domain-wide '
+    . 'delegation enabled and authorised for the Google Calendar Events scope.';
 $string['googleeventsource'] = 'View course in Moodle';
 $string['googleserviceaccountkeypath'] = 'Google service account key file';
 $string['googleserviceaccountkeypath_desc'] = 'Used only when the delivery method is Google Calendar API. Enter the '
     . 'absolute server path to the Google service account JSON key file. Store the key outside the web root. Share '
-    . 'each target Google calendar with the delegated user with permission to make changes to events.';
+    . 'each target Google calendar with the delegated user, or with the service account when no delegated user is set, '
+    . 'with permission to make changes to events.';
 $string['invite'] = 'Hello {$a->name},<br><br>'
     . 'You have an event or training coming up: {$a->eventname} scheduled on {$a->date} for course {$a->url}<br>'
     . 'Please add this invite to your calendar to stay in the loop.<br><br>'

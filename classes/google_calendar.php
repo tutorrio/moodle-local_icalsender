@@ -31,13 +31,10 @@ class google_calendar {
     private const TOKEN_URL = 'https://oauth2.googleapis.com/token';
 
     /** Scope required to create, update and delete Google Calendar events. */
-    private const CALENDAR_EVENTS_SCOPE = 'https://www.googleapis.com/auth/calendar';
+    private const CALENDAR_EVENTS_SCOPE = 'https://www.googleapis.com/auth/calendar.events';
 
     /** Refresh cached access tokens before Google considers them expired. */
     private const TOKEN_EXPIRY_MARGIN = 60;
-
-    /** Default Google Workspace user impersonated through domain-wide delegation. */
-    private const DEFAULT_DELEGATED_USER = 'noreply@tutorrio.com';
 
     /** @var array Access tokens cached for this PHP request. */
     private static $requesttokens = [];
@@ -45,7 +42,7 @@ class google_calendar {
     /** @var array Service account credentials loaded from the Google JSON key file. */
     private $credentials;
 
-    /** @var string Google Workspace user to impersonate through domain-wide delegation. */
+    /** @var string|null Google Workspace user to impersonate through domain-wide delegation. */
     private $delegateduser;
 
     /**
@@ -259,13 +256,10 @@ class google_calendar {
     /**
      * Get the delegated Google Workspace user from plugin configuration.
      *
-     * @return string Delegated user email address.
+     * @return string|null Delegated user email address.
      */
-    private static function delegated_user_from_configuration(): string {
+    private static function delegated_user_from_configuration(): ?string {
         $delegateduser = trim((string)get_config('local_icalsender', 'googledelegateduser'));
-        if ($delegateduser === '') {
-            return self::DEFAULT_DELEGATED_USER;
-        }
         return self::validate_delegated_user($delegateduser);
     }
 
@@ -335,12 +329,12 @@ class google_calendar {
      * Validate the delegated Google Workspace user.
      *
      * @param string|null $delegateduser Delegated user email address.
-     * @return string Valid delegated user email address.
+     * @return string|null Valid delegated user email address, or null to use the service account directly.
      */
-    private static function validate_delegated_user(?string $delegateduser): string {
+    private static function validate_delegated_user(?string $delegateduser): ?string {
         $delegateduser = trim((string)$delegateduser);
         if ($delegateduser === '') {
-            $delegateduser = self::DEFAULT_DELEGATED_USER;
+            return null;
         }
         if (!filter_var($delegateduser, FILTER_VALIDATE_EMAIL)) {
             throw new \RuntimeException("The configured Google delegated user is not a valid email address: {$delegateduser}");
@@ -452,10 +446,13 @@ class google_calendar {
      * @return string Access diagnostic.
      */
     private function calendar_access_hint(string $calendarid): string {
+        $principal = $this->delegateduser ?? (string)$this->credentials['client_email'];
+        $principaltype = $this->delegateduser === null ? 'service account' : 'delegated Google user';
+
         return 'Calendar access hint: verify that the course calendarid '
             . self::safe_diagnostic_value($calendarid)
-            . ' is the exact Google Calendar ID and that delegated Google user '
-            . self::safe_diagnostic_value($this->delegateduser)
+            . ' is the exact Google Calendar ID and that ' . $principaltype . ' '
+            . self::safe_diagnostic_value($principal)
             . ' has Make changes to events permission on that calendar.';
     }
 
@@ -548,8 +545,10 @@ class google_calendar {
             'aud' => self::TOKEN_URL,
             'iat' => $issuedat,
             'exp' => $issuedat + 3600,
-            'sub' => $delegateduser,
         ];
+        if ($delegateduser !== null) {
+            $claims['sub'] = $delegateduser;
+        }
 
         $signinginput = self::base64url_encode(json_encode($header)) . '.' . self::base64url_encode(json_encode($claims));
         $privatekey = openssl_pkey_get_private((string)$credentials['private_key']);
@@ -587,7 +586,7 @@ class google_calendar {
         return sha1(
             (string)$this->credentials['client_email'] . ':'
                 . (string)($this->credentials['private_key_id'] ?? '') . ':'
-                . $this->delegateduser
+                . (string)($this->delegateduser ?? '')
         );
     }
 

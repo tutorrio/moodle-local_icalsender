@@ -54,7 +54,7 @@ if ($hassiteconfig) {
         'local_icalsender/googledelegateduser',
         get_string('googledelegateduser', 'local_icalsender'),
         get_string('googledelegateduser_desc', 'local_icalsender'),
-        'noreply@tutorrio.com',
+        '',
         PARAM_EMAIL
     ));
     $settings->hide_if(

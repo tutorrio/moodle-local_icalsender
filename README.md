@@ -58,17 +58,18 @@ The plugin uses a Google service account JSON key to request short-lived access 
 3. Create a service account in **IAM & Admin > Service Accounts**.
 4. Enable **Domain-wide delegation** for the service account and note its OAuth 2 client ID.
 5. In the Google Admin Console, authorise that client ID for the scope
-   `https://www.googleapis.com/auth/calendar`.
+   `https://www.googleapis.com/auth/calendar.events`.
 6. Create and download a JSON key for the service account.
 7. Store the JSON key file on the Moodle server outside the web root, readable by the web server user.
 8. Note the service account email address from the JSON key file or Google Cloud Console.
 
-The plugin impersonates a Google Workspace user through domain-wide delegation. The default delegated user is
-`noreply@tutorrio.com`, and it can be changed in the plugin settings. For each target shared Google calendar,
-open **Settings and sharing** in Google Calendar, share the calendar with the delegated user, and grant at
-least **Make changes to events** permission.
+The **Google delegated user** setting is empty by default. With an empty value, Google Calendar requests run as
+the service account itself, so each target shared Google calendar must be shared with the service account email
+address from the JSON key. To impersonate a Workspace user instead, enter a site-specific user such as
+`calendar-admin@example.com`, enable domain-wide delegation, and share each target calendar with that delegated
+user. The account that Google Calendar sees must have at least **Make changes to events** permission.
 
-Finally, go to **Site administration > Plugins > Local plugins > iCal Sender**, set **Calendar event delivery method** to **API - Google Calendar**, enter the absolute server path to the JSON key file in **Google service account key file**, and set **Google delegated user** to the Workspace user to impersonate. Leaving the key-file setting empty prevents Google API delivery from creating, updating or deleting events.
+Finally, go to **Site administration > Plugins > Local plugins > iCal Sender**, set **Calendar event delivery method** to **API - Google Calendar**, enter the absolute server path to the JSON key file in **Google service account key file**, and leave **Google delegated user** empty unless you need to impersonate a Workspace user. Leaving the key-file setting empty prevents Google API delivery from creating, updating or deleting events.
 
 ### 2. Create the `calendarid` course custom field
 

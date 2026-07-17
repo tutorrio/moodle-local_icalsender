@@ -140,7 +140,7 @@ final class google_calendar_test extends \advanced_testcase {
 
         $method = new \ReflectionMethod(google_calendar::class, 'create_signed_jwt');
         $method->setAccessible(true);
-        $jwt = $method->invoke(null, $credentials, $issuedat, 'noreply@tutorrio.com');
+        $jwt = $method->invoke(null, $credentials, $issuedat, 'calendar-admin@example.com');
         $parts = explode('.', $jwt);
 
         $this->assertCount(3, $parts);
@@ -153,12 +153,43 @@ final class google_calendar_test extends \advanced_testcase {
         $this->assertSame('JWT', $header['typ']);
         $this->assertSame('testkeyid', $header['kid']);
         $this->assertSame('calendar-service@example.iam.gserviceaccount.com', $claims['iss']);
-        $this->assertSame('https://www.googleapis.com/auth/calendar', $claims['scope']);
+        $this->assertSame('https://www.googleapis.com/auth/calendar.events', $claims['scope']);
         $this->assertSame('https://oauth2.googleapis.com/token', $claims['aud']);
         $this->assertSame($issuedat, $claims['iat']);
         $this->assertSame($issuedat + 3600, $claims['exp']);
-        $this->assertSame('noreply@tutorrio.com', $claims['sub']);
+        $this->assertSame('calendar-admin@example.com', $claims['sub']);
         $this->assertSame(1, openssl_verify($parts[0] . '.' . $parts[1], $signature, $publickey, OPENSSL_ALGO_SHA256));
+    }
+
+    /**
+     * Empty delegated user leaves the service account JWT unimpersonated.
+     */
+    public function test_service_account_jwt_without_delegated_user(): void {
+        if (!extension_loaded('openssl')) {
+            $this->markTestSkipped('The openssl extension is required to test service account JWT signing.');
+        }
+
+        $key = openssl_pkey_new([
+            'private_key_bits' => 2048,
+            'private_key_type' => OPENSSL_KEYTYPE_RSA,
+        ]);
+        $this->assertNotFalse($key);
+        $this->assertTrue(openssl_pkey_export($key, $privatekey));
+
+        $credentials = [
+            'type' => 'service_account',
+            'client_email' => 'calendar-service@example.iam.gserviceaccount.com',
+            'private_key' => $privatekey,
+            'private_key_id' => 'testkeyid',
+        ];
+
+        $method = new \ReflectionMethod(google_calendar::class, 'create_signed_jwt');
+        $method->setAccessible(true);
+        $jwt = $method->invoke(null, $credentials, 1735689600, '');
+        $parts = explode('.', $jwt);
+        $claims = json_decode($this->base64url_decode($parts[1]), true);
+
+        $this->assertArrayNotHasKey('sub', $claims);
     }
 
     /**
@@ -238,15 +269,32 @@ final class google_calendar_test extends \advanced_testcase {
             'type' => 'service_account',
             'client_email' => 'calendar-service@example.iam.gserviceaccount.com',
             'private_key' => 'unused in this test',
-        ], 'noreply@tutorrio.com');
+        ], 'calendar-admin@example.com');
 
         $method = new \ReflectionMethod(google_calendar::class, 'calendar_access_hint');
         $method->setAccessible(true);
         $hint = $method->invoke($service, 'shared@example.com');
 
         $this->assertStringContainsString("course calendarid 'shared@example.com'", $hint);
-        $this->assertStringContainsString("delegated Google user 'noreply@tutorrio.com'", $hint);
+        $this->assertStringContainsString("delegated Google user 'calendar-admin@example.com'", $hint);
         $this->assertStringContainsString('Make changes to events', $hint);
+    }
+
+    /**
+     * Calendar 404 diagnostics name the service account when no delegated user is configured.
+     */
+    public function test_calendar_access_hint_names_service_account_without_delegated_user(): void {
+        $service = new google_calendar([
+            'type' => 'service_account',
+            'client_email' => 'calendar-service@example.iam.gserviceaccount.com',
+            'private_key' => 'unused in this test',
+        ], '');
+
+        $method = new \ReflectionMethod(google_calendar::class, 'calendar_access_hint');
+        $method->setAccessible(true);
+        $hint = $method->invoke($service, 'shared@example.com');
+
+        $this->assertStringContainsString("service account 'calendar-service@example.iam.gserviceaccount.com'", $hint);
     }
 
     /**
