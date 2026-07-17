@@ -741,6 +741,8 @@ class google_calendar {
      * @param callable $operation Operation to execute.
      * @param string $action Action name used in diagnostics.
      * @param int $eventid Moodle event ID.
+     * @param int|null $courseid Moodle course ID when known.
+     * @param callable|null $calendaridcallback Callback returning the Google calendar ID when known.
      * @return void
      */
     private static function safely(
