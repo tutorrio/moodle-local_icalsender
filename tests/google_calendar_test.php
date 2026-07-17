@@ -116,6 +116,52 @@ final class google_calendar_test extends \advanced_testcase {
     }
 
     /**
+     * Service account JWT assertions contain the expected claims and a valid RSA signature.
+     */
+    public function test_service_account_jwt(): void {
+        if (!extension_loaded('openssl')) {
+            $this->markTestSkipped('The openssl extension is required to test service account JWT signing.');
+        }
+
+        $key = openssl_pkey_new([
+            'private_key_bits' => 2048,
+            'private_key_type' => OPENSSL_KEYTYPE_RSA,
+        ]);
+        $this->assertNotFalse($key);
+        $this->assertTrue(openssl_pkey_export($key, $privatekey));
+
+        $credentials = [
+            'type' => 'service_account',
+            'client_email' => 'calendar-service@example.iam.gserviceaccount.com',
+            'private_key' => $privatekey,
+            'private_key_id' => 'testkeyid',
+        ];
+        $issuedat = 1735689600;
+
+        $method = new \ReflectionMethod(google_calendar::class, 'create_signed_jwt');
+        $method->setAccessible(true);
+        $jwt = $method->invoke(null, $credentials, $issuedat, 'noreply@tutorrio.com');
+        $parts = explode('.', $jwt);
+
+        $this->assertCount(3, $parts);
+        $header = json_decode($this->base64url_decode($parts[0]), true);
+        $claims = json_decode($this->base64url_decode($parts[1]), true);
+        $signature = $this->base64url_decode($parts[2]);
+        $publickey = openssl_pkey_get_details($key)['key'];
+
+        $this->assertSame('RS256', $header['alg']);
+        $this->assertSame('JWT', $header['typ']);
+        $this->assertSame('testkeyid', $header['kid']);
+        $this->assertSame('calendar-service@example.iam.gserviceaccount.com', $claims['iss']);
+        $this->assertSame('https://www.googleapis.com/auth/calendar', $claims['scope']);
+        $this->assertSame('https://oauth2.googleapis.com/token', $claims['aud']);
+        $this->assertSame($issuedat, $claims['iat']);
+        $this->assertSame($issuedat + 3600, $claims['exp']);
+        $this->assertSame('noreply@tutorrio.com', $claims['sub']);
+        $this->assertSame(1, openssl_verify($parts[0] . '.' . $parts[1], $signature, $publickey, OPENSSL_ALGO_SHA256));
+    }
+
+    /**
      * Courses without the calendarid custom field do not opt into Google sync.
      */
     public function test_get_course_calendar_id_without_field(): void {
@@ -145,5 +191,115 @@ final class google_calendar_test extends \advanced_testcase {
         $generator->add_instance_data($field, $course->id, ' shared@example.com ');
 
         $this->assertSame('shared@example.com', google_calendar::get_course_calendar_id($course->id));
+    }
+
+    /**
+     * Google Calendar JSON errors are reduced to useful diagnostics.
+     */
+    public function test_google_error_summary_for_calendar_api_error(): void {
+        $summary = $this->invoke_google_error_summary(json_encode([
+            'error' => [
+                'code' => 403,
+                'message' => 'The caller does not have permission',
+                'status' => 'PERMISSION_DENIED',
+                'errors' => [
+                    [
+                        'reason' => 'forbiddenForServiceAccounts',
+                        'message' => 'Service accounts cannot invite attendees without delegation.',
+                    ],
+                ],
+            ],
+        ]));
+
+        $this->assertSame(
+            'PERMISSION_DENIED; The caller does not have permission; forbiddenForServiceAccounts; '
+                . 'Service accounts cannot invite attendees without delegation.',
+            $summary
+        );
+    }
+
+    /**
+     * Google OAuth token endpoint errors are reduced to useful diagnostics.
+     */
+    public function test_google_error_summary_for_token_error(): void {
+        $summary = $this->invoke_google_error_summary(json_encode([
+            'error' => 'invalid_grant',
+            'error_description' => 'Invalid JWT Signature.',
+        ]));
+
+        $this->assertSame('invalid_grant; Invalid JWT Signature.', $summary);
+    }
+
+    /**
+     * Calendar 404 diagnostics identify the delegated user whose calendar access matters.
+     */
+    public function test_calendar_access_hint_names_delegated_user(): void {
+        $service = new google_calendar([
+            'type' => 'service_account',
+            'client_email' => 'calendar-service@example.iam.gserviceaccount.com',
+            'private_key' => 'unused in this test',
+        ], 'noreply@tutorrio.com');
+
+        $method = new \ReflectionMethod(google_calendar::class, 'calendar_access_hint');
+        $method->setAccessible(true);
+        $hint = $method->invoke($service, 'shared@example.com');
+
+        $this->assertStringContainsString("course calendarid 'shared@example.com'", $hint);
+        $this->assertStringContainsString("delegated Google user 'noreply@tutorrio.com'", $hint);
+        $this->assertStringContainsString('Make changes to events', $hint);
+    }
+
+    /**
+     * Google failures are emitted as Moodle log events.
+     */
+    public function test_google_failure_logs_moodle_event(): void {
+        $this->resetAfterTest(true);
+        $sink = $this->redirectEvents();
+
+        $method = new \ReflectionMethod(google_calendar::class, 'log_failure');
+        $method->setAccessible(true);
+        $method->invoke(
+            null,
+            'create',
+            123,
+            new \RuntimeException('Google Calendar request failed with HTTP status 403.'),
+            null,
+            'shared@example.com'
+        );
+
+        $events = $sink->get_events();
+        $sink->close();
+
+        $this->assertCount(1, $events);
+        $this->assertInstanceOf(\local_icalsender\event\google_sync_failed::class, $events[0]);
+        $this->assertSame(123, $events[0]->objectid);
+        $this->assertSame('create', $events[0]->other['action']);
+        $this->assertSame('shared@example.com', $events[0]->other['calendarid']);
+    }
+
+    /**
+     * Decode a base64url-encoded JWT segment.
+     *
+     * @param string $value Encoded value.
+     * @return string Decoded value.
+     */
+    private function base64url_decode(string $value): string {
+        $padding = strlen($value) % 4;
+        if ($padding > 0) {
+            $value .= str_repeat('=', 4 - $padding);
+        }
+        return base64_decode(strtr($value, '-_', '+/'));
+    }
+
+    /**
+     * Invoke the private Google error summary helper.
+     *
+     * @param string $response JSON response body.
+     * @return string|null Error summary.
+     */
+    private function invoke_google_error_summary(string $response): ?string {
+        $method = new \ReflectionMethod(google_calendar::class, 'google_error_summary');
+        $method->setAccessible(true);
+        return $method->invoke(null, $response);
     }
 }

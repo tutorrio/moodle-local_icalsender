@@ -74,5 +74,11 @@ function xmldb_local_icalsender_upgrade($oldversion) {
         upgrade_plugin_savepoint(true, 2026062300, 'local', 'icalsender');
     }
 
+    if ($oldversion < 2026071600) {
+        unset_config('googleoauthissuerid', 'local_icalsender');
+
+        upgrade_plugin_savepoint(true, 2026071600, 'local', 'icalsender');
+    }
+
     return true;
 }

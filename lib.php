@@ -21,16 +21,3 @@
  * @copyright  2025 Mario Vitale <mario.vitale@tutorrio.com>
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
-
-/**
- * Add the Calendar Events scope when a Google OAuth system account is connected.
- *
- * @param \core\oauth2\issuer $issuer OAuth issuer.
- * @return string Additional OAuth scopes.
- */
-function local_icalsender_oauth2_system_scopes($issuer) {
-    if ($issuer->get('servicetype') === 'google') {
-        return 'https://www.googleapis.com/auth/calendar.events';
-    }
-    return '';
-}

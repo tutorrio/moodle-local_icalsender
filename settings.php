@@ -36,21 +36,29 @@ if ($hassiteconfig) {
         \local_icalsender\event_delivery::method_options()
     ));
 
-    $issuers = [0 => get_string('none')];
-    foreach (\core\oauth2\api::get_all_issuers(true) as $issuer) {
-        if ($issuer->get('servicetype') === 'google') {
-            $issuers[$issuer->get('id')] = $issuer->get('name');
-        }
-    }
-    $settings->add(new admin_setting_configselect(
-        'local_icalsender/googleoauthissuerid',
-        get_string('googleoauthissuerid', 'local_icalsender'),
-        get_string('googleoauthissuerid_desc', 'local_icalsender'),
-        0,
-        $issuers
+    $settings->add(new admin_setting_configtext(
+        'local_icalsender/googleserviceaccountkeypath',
+        get_string('googleserviceaccountkeypath', 'local_icalsender'),
+        get_string('googleserviceaccountkeypath_desc', 'local_icalsender'),
+        '',
+        PARAM_RAW_TRIMMED
     ));
     $settings->hide_if(
-        'local_icalsender/googleoauthissuerid',
+        'local_icalsender/googleserviceaccountkeypath',
+        'local_icalsender/deliverymethod',
+        'neq',
+        \local_icalsender\event_delivery::METHOD_GOOGLE_API
+    );
+
+    $settings->add(new admin_setting_configtext(
+        'local_icalsender/googledelegateduser',
+        get_string('googledelegateduser', 'local_icalsender'),
+        get_string('googledelegateduser_desc', 'local_icalsender'),
+        'noreply@tutorrio.com',
+        PARAM_EMAIL
+    ));
+    $settings->hide_if(
+        'local_icalsender/googledelegateduser',
         'local_icalsender/deliverymethod',
         'neq',
         \local_icalsender\event_delivery::METHOD_GOOGLE_API

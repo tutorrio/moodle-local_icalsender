@@ -49,22 +49,26 @@ The `calendarid` shared-calendar feature is only supported by the API delivery m
 
 When API delivery is configured, creating, updating or deleting a supported Moodle calendar event performs the corresponding operation in Google Calendar. The Google event contains the Moodle event name, description, location, start and end time, a link back to the Moodle course, and the relevant enrolled users as attendees.
 
-### 1. Create and configure the Google OAuth service
+### 1. Create and configure the Google service account
 
-The plugin uses Moodle's standard OAuth 2 system-account support. It does not store a Google client secret or refresh token itself.
+The plugin uses a Google service account JSON key to request short-lived access tokens for the Google Calendar API. It does not use Moodle's OAuth 2 system-account flow.
 
 1. Create or select a project in the Google Cloud Console.
 2. Enable the **Google Calendar API** for that project.
-3. Configure the Google OAuth consent screen and create OAuth 2 client credentials for a web application. Add the callback URL displayed by Moodle to the authorised redirect URIs in Google.
-4. In Moodle, go to **Site administration > Server > OAuth 2 services**.
-5. Create a new Google OAuth 2 service and enter the client ID and client secret created in Google Cloud.
-6. Use Moodle's **Connect system account** action for the service and sign in with the Google account that the plugin should use.
+3. Create a service account in **IAM & Admin > Service Accounts**.
+4. Enable **Domain-wide delegation** for the service account and note its OAuth 2 client ID.
+5. In the Google Admin Console, authorise that client ID for the scope
+   `https://www.googleapis.com/auth/calendar`.
+6. Create and download a JSON key for the service account.
+7. Store the JSON key file on the Moodle server outside the web root, readable by the web server user.
+8. Note the service account email address from the JSON key file or Google Cloud Console.
 
-The plugin requests the Google Calendar Events scope (`https://www.googleapis.com/auth/calendar.events`) when the system account is connected. If the system account was already connected before this plugin was installed or upgraded, reconnect it so that Google asks for and grants the additional scope.
+The plugin impersonates a Google Workspace user through domain-wide delegation. The default delegated user is
+`noreply@tutorrio.com`, and it can be changed in the plugin settings. For each target shared Google calendar,
+open **Settings and sharing** in Google Calendar, share the calendar with the delegated user, and grant at
+least **Make changes to events** permission.
 
-The connected Google account must also have permission to modify every target calendar. For a shared calendar, share the calendar with the system-account email address and grant at least **Make changes to events** permission.
-
-Finally, go to **Site administration > Plugins > Local plugins > iCal Sender**, set **Calendar event delivery method** to **API - Google Calendar**, and select the Google OAuth 2 service in the **Google OAuth 2 service** setting. Selecting **None** prevents Google API delivery from creating, updating or deleting events.
+Finally, go to **Site administration > Plugins > Local plugins > iCal Sender**, set **Calendar event delivery method** to **API - Google Calendar**, enter the absolute server path to the JSON key file in **Google service account key file**, and set **Google delegated user** to the Workspace user to impersonate. Leaving the key-file setting empty prevents Google API delivery from creating, updating or deleting events.
 
 ### 2. Create the `calendarid` course custom field
 
@@ -81,7 +85,7 @@ Google API delivery is attempted only when the course has a non-empty `calendari
 
 ### 3. Using the synchronisation
 
-After the OAuth service and course custom field are configured, no additional action is required from teachers:
+After the service account and course custom field are configured, no additional action is required from teachers:
 
 - Creating a future Moodle course or group event creates an event in the calendar identified by `calendarid`.
 - Updating the Moodle event updates the corresponding Google event.
@@ -94,6 +98,9 @@ Google Calendar notification emails are enabled for these API operations (`sendU
 
 The plugin stores the Google event ID and calendar ID in `local_icalsender_gcal_events` so that later updates and deletions target the correct Google event. Clearing `calendarid` does not immediately remove events that were already synchronised. Deleting the corresponding Moodle event will still remove its mapped Google event; alternatively, move it by changing `calendarid` to another calendar ID and updating the event.
 
-Google API failures are isolated from Moodle calendar changes. With Moodle developer debugging enabled, failures are reported with messages beginning with `icalsender: Google Calendar`.
+Google API failures are isolated from Moodle calendar changes. Failures are written to Moodle's standard logs
+as **Google Calendar synchronisation failed** events, including the Moodle event ID, action, Google calendar ID
+when known, and the safe portion of Google's error response. With Moodle developer debugging enabled, failures
+are also reported with messages beginning with `icalsender: Google Calendar`.
 
 This plugin stores ICS delivery state in `local_icalsender_ics_events` and Google event mappings in `local_icalsender_gcal_events`.
