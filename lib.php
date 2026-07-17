@@ -15,16 +15,9 @@
 // along with Moodle.  If not, see <https://www.gnu.org/licenses/>.
 
 /**
- * Class which contains information about the plugins version.
+ * Plugin callbacks.
  *
- * @package local_icalsender
+ * @package    local_icalsender
  * @copyright  2025 Mario Vitale <mario.vitale@tutorrio.com>
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
-
-defined('MOODLE_INTERNAL') || die();
-$plugin->component = 'local_icalsender';
-$plugin->version  = 2026071607;
-$plugin->requires = 2021051704.00;
-$plugin->release = 'v1.6';
-$plugin->maturity = MATURITY_BETA;

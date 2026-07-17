@@ -1,0 +1,7 @@
+filter:
+  notPaths:
+    - moodle
+    - moodledata
+    - node_modules
+    - scripts/ci
+    - vendor

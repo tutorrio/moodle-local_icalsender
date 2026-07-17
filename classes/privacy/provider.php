@@ -25,22 +25,29 @@
 namespace local_icalsender\privacy;
 
 /**
- * Privacy Subsystem for icalsender implementing null_provider.
+ * Privacy Subsystem for icalsender.
  *
  * @copyright  2025 Mario Vitale <mario.vitale@tutorrio.com>
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
-class provider implements
-    // This plugin does not store any personal user data.
-    \core_privacy\local\metadata\null_provider
-{
+class provider implements \core_privacy\local\metadata\provider {
     /**
-     * Get the language string identifier with the component's language
-     * file to explain why this plugin stores no data.
+     * Describe data sent to Google Calendar.
      *
-     * @return  string
+     * @param \core_privacy\local\metadata\collection $collection Metadata collection.
+     * @return \core_privacy\local\metadata\collection
      */
-    public static function get_reason(): string {
-        return 'privacy:metadata';
+    public static function get_metadata(
+        \core_privacy\local\metadata\collection $collection
+    ): \core_privacy\local\metadata\collection {
+        $collection->add_external_location_link('googlecalendar', [
+            'attendees' => 'privacy:metadata:googlecalendar:attendees',
+            'summary' => 'privacy:metadata:googlecalendar:summary',
+            'description' => 'privacy:metadata:googlecalendar:description',
+            'location' => 'privacy:metadata:googlecalendar:location',
+            'start' => 'privacy:metadata:googlecalendar:start',
+            'end' => 'privacy:metadata:googlecalendar:end',
+        ], 'privacy:metadata:googlecalendar');
+        return $collection;
     }
 }

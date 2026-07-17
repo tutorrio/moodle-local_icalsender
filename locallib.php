@@ -388,7 +388,7 @@ function local_icalsender_insert_event($eventid, $eventname) {
         $record->seqnum = 0;
         $record->senttime = time();
 
-        $id = $DB->insert_record('local_icalsender_ics_events', $record);
+        $DB->insert_record('local_icalsender_ics_events', $record);
     } catch (dml_exception $e) {
         debugging("icalsender: Insert of eventid $eventid failed: " . $e->getMessage(), DEBUG_DEVELOPER);
     }

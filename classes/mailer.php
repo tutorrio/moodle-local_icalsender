@@ -36,7 +36,6 @@ class mailer
      *
      */
     public static function local_icalsender_send_ics_mail_from_noreply($user, $subject, $body, $icsdata) {
-        global $CFG;
 
         // Create a message object for the email.
         $message = new \core\message\message();

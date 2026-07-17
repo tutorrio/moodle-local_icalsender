@@ -103,6 +103,57 @@ final class observer_test extends \advanced_testcase
     }
 
     /**
+     * Test calendar_event_created observer in Google API delivery mode.
+     * @covers \local_icalsender\observer::calendar_event_created
+     */
+    public function test_calendar_event_created_google_api_method_does_not_log_ics_event(): void {
+        global $DB, $CFG;
+
+        require_once($CFG->dirroot . '/calendar/lib.php');
+
+        $this->resetAfterTest(true);
+        set_config('deliverymethod', event_delivery::METHOD_GOOGLE_API, 'local_icalsender');
+
+        $course = $this->getDataGenerator()->create_course();
+        $this->setAdminUser();
+
+        $event = new \stdClass();
+        $event->name = 'Google API Event';
+        $event->description = 'Created through the configured API provider.';
+        $event->courseid = $course->id;
+        $event->eventtype = 'course';
+        $event->groupid = 0;
+        $event->userid = 0;
+        $event->modulename = '';
+        $event->instance = 0;
+        $event->timestart = time() + 3600;
+        $event->timeduration = 0;
+        $event->visible = 1;
+        $event->timemodified = time();
+        $eventid = $DB->insert_record('event', $event);
+
+        $eventdata = [
+            'objectid' => $eventid,
+            'courseid' => $course->id,
+            'contextid' => \context_course::instance($course->id)->id,
+            'other' => [
+                'repeatid' => 0,
+                'name' => $event->name,
+                'timestart' => $event->timestart,
+                'timeduration' => $event->timeduration,
+                'eventtype' => $event->eventtype,
+            ],
+        ];
+        $eventobj = \core\event\calendar_event_created::create($eventdata);
+
+        $this->assertDebuggingNotCalled();
+        observer::calendar_event_created($eventobj);
+
+        $logexists = $DB->record_exists('local_icalsender_ics_events', ['eventid' => $eventid]);
+        $this->assertFalse($logexists, 'Google API delivery should not log an ICS event');
+    }
+
+    /**
      * Test calendar delete
      * @covers \local_icalsender\helper::test_calendar_event_deleted_course_event
      */

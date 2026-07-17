@@ -1,0 +1,26 @@
+{
+    "name": "tutorrio/moodle-local_icalsender",
+    "description": "Sends iCalendar invitations for Moodle course and group calendar events.",
+    "type": "moodle-local",
+    "license": "GPL-3.0-or-later",
+    "authors": [
+        {
+            "name": "Mario Vitale",
+            "email": "mario.vitale@tutorrio.com"
+        }
+    ],
+    "require": {
+        "php": "^8.2"
+    },
+    "require-dev": {
+        "moodlehq/moodle-cs": "^3.7"
+    },
+    "scripts": {
+        "lint": "phpcs"
+    },
+    "config": {
+        "allow-plugins": {
+            "dealerdirect/phpcodesniffer-composer-installer": true
+        }
+    }
+}
