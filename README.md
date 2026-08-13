@@ -11,6 +11,8 @@ The logic is triggered by listening  to following Moodle system event:
 - \core\event\user_enrolment_deleted
 - \core\event\group_member_added
 - \core\event\group_member_removed
+- \mod_attendance\event\attendance_taken_by_student
+- \mod_attendance\event\attendance_taken
 
 Each of these events will cause an email with ICS attachment to be sent to the attendee(s) of the calendar event AND to the creator(aka organizer) of the event.
 This way attendees and organizer can use their calendar application for RSVP'ing, following up who is attending,...
@@ -25,11 +27,13 @@ ICS invite is sent in following scenario's:
 - when organizer (un)enrolling a user to/from a course that is linked to a calendar event
 - when organizer adds/removes a user to/from a group that is in a course linked to a calendar event
 - when organizer updates the event (like change the date/hour/location)
+- when an Attendance session is taken or a student self-confirms an Attendance session, if the optional Attendance activity plugin is installed
+  and the Attendance activity uses the default status set: Present, Absent, Late, Excused
 
 Currently not supported:
 
 - other calendar event types (site, user, category) will not trigger any ICS invite
-- some other Moodle plugins like 'attendance, SurveyPro' also create calendar events in Moodle. This are ignored and will not trigger any ICS invite mail
+- some other Moodle plugins like 'SurveyPro' also create calendar events in Moodle. These are ignored and will not trigger any ICS invite mail
 
 
 ## Usage
@@ -91,6 +95,10 @@ After the service account and course custom field are configured, no additional 
 - Creating a future Moodle course or group event creates an event in the calendar identified by `calendarid`.
 - Updating the Moodle event updates the corresponding Google event.
 - Deleting the Moodle event deletes the corresponding Google event.
+- When an Attendance session is taken or a student self-confirms an Attendance session, the linked Attendance calendar
+  event is created or updated in the calendar identified by `calendarid`. Present and Late users are included as
+  attendees. Absent and Excused users have their Attendance calendar event removed. If no users have a
+  calendar-eligible Attendance status, the shared calendar event is deleted.
 - Changing `calendarid` and then updating a Moodle event removes it from the previous calendar and creates it in the new calendar.
 - Enrolled course users are included as attendees of course events; group members are included as attendees of group events.
 - User enrolment, unenrolment and group membership changes update the attendee list without creating duplicate events in the shared Google calendar.

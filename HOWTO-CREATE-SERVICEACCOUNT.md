@@ -1,6 +1,6 @@
 # How To Create A Google Service Account
 
-This plugin uses a Google service account to create, update and delete events in shared Google calendars. By default it authenticates as the service account itself. Optionally, it can use domain-wide delegation to impersonate a configured Google Workspace user.
+This plugin can use a Google service account to create, update and delete events in shared Google calendars. By default it authenticates as the service account itself. Optionally, it can use domain-wide delegation to impersonate a configured Google Workspace user.
 
 ## 1. Create Or Select A Google Cloud Project
 

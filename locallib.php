@@ -123,6 +123,99 @@ END:VCALENDAR
 ICS;
 }
 
+/**
+ * Generates an iCalendar (ICS) invite for Attendance participants.
+ *
+ * @param object $eventrecord Event data object.
+ * @param string $desc Event description.
+ * @param array $users Attendance participant user records.
+ * @param object $from Sender user object.
+ * @param int $seqnumber Sequence number for the event.
+ * @return string ICS file content.
+ */
+function local_icalsender_generate_attendance_ics($eventrecord, $desc, $users, $from, $seqnumber) {
+    $dtstamp = local_icalsender_format_ics_datetime(time());
+    $dtstart = local_icalsender_format_ics_datetime($eventrecord->timestart);
+    $dtend = local_icalsender_format_ics_datetime($eventrecord->timestart + $eventrecord->timeduration);
+    $lastmodified = $dtstamp;
+    $uid = "attendance-{$eventrecord->id}";
+    $summary = $eventrecord->name;
+    $location = $eventrecord->location;
+    $attendees = local_icalsender_generate_attendees($users, '');
+
+    return <<<ICS
+BEGIN:VCALENDAR
+VERSION:2.0
+PRODID:-//Moodle//NONSGML Moodle ICS Generator//EN
+METHOD:REQUEST
+BEGIN:VEVENT
+UID:$uid
+DTSTAMP:$dtstamp
+DTSTART:$dtstart
+DTEND:$dtend
+SEQUENCE:$seqnumber
+STATUS:CONFIRMED
+SUMMARY:$summary
+DESCRIPTION:$desc
+ORGANIZER;CN=LMS Organizer:mailto:$from->email
+$attendees
+TRANSP:OPAQUE
+LOCATION:$location
+LAST-MODIFIED:$lastmodified
+BEGIN:VALARM
+TRIGGER:-PT10M
+DESCRIPTION:Reminder for $summary
+ACTION:DISPLAY
+END:VALARM
+END:VEVENT
+END:VCALENDAR
+ICS;
+}
+
+/**
+ * Generates an iCalendar (ICS) cancellation for one Attendance participant.
+ *
+ * @param object $eventrecord Event data object.
+ * @param string $desc Event description.
+ * @param object $user User whose Attendance invite should be cancelled.
+ * @param object $from Sender user object.
+ * @param int $seqnumber Sequence number for the event.
+ * @return string ICS file content.
+ */
+function local_icalsender_generate_attendance_cancel_ics($eventrecord, $desc, $user, $from, $seqnumber) {
+    $dtstamp = local_icalsender_format_ics_datetime(time());
+    $dtstart = local_icalsender_format_ics_datetime($eventrecord->timestart);
+    $dtend = local_icalsender_format_ics_datetime($eventrecord->timestart + $eventrecord->timeduration);
+    $lastmodified = $dtstamp;
+    $uid = "attendance-{$eventrecord->id}";
+    $summary = $eventrecord->name;
+    $location = $eventrecord->location;
+    $username = "{$user->firstname} {$user->lastname}";
+
+    return <<<ICS
+BEGIN:VCALENDAR
+VERSION:2.0
+PRODID:-//Moodle//NONSGML Moodle ICS Generator//EN
+METHOD:CANCEL
+BEGIN:VEVENT
+UID:$uid
+DTSTAMP:$dtstamp
+DTSTART:$dtstart
+DTEND:$dtend
+SEQUENCE:$seqnumber
+STATUS:CANCELLED
+SUMMARY:$summary
+DESCRIPTION:$desc
+ORGANIZER;CN=LMS Organizer:mailto:$from->email
+ATTENDEE;CN=$username;ROLE=REQ-PARTICIPANT;
+ PARTSTAT=DECLINED;RSVP=FALSE:mailto:$user->email
+LOCATION:$location
+LAST-MODIFIED:$lastmodified
+END:VEVENT
+END:VCALENDAR
+ICS;
+}
+
 
 /**
  * Generates an iCalendar (ICS) event for an event update.
@@ -269,6 +362,74 @@ function local_icalsender_send_mail_with_ics_attachment($eventrecord, $users, $u
         }
     }
     return;
+}
+
+/**
+ * Sends an Attendance invite to the relevant course or group users.
+ *
+ * @param object $eventrecord Event data object.
+ * @param array $users Attendance participant user records.
+ * @param string $url Course URL.
+ * @param int $seqnumber Sequence number for the event.
+ * @return void
+ */
+function local_icalsender_send_attendance_invite_ics_attachment($eventrecord, $users, $url, $seqnumber) {
+    $eventdate = userdate($eventrecord->timestart);
+    $subject = get_string(
+        'subjectinvite',
+        'local_icalsender',
+        (object)[
+            'eventname' => $eventrecord->name,
+            'date' => $eventdate,
+        ]
+    );
+    $desc = local_icalsender_remove_newlines($eventrecord->description);
+    $from = \core_user::get_noreply_user();
+    $icsdata = local_icalsender_generate_attendance_ics($eventrecord, $desc, $users, $from, $seqnumber);
+
+    foreach ($users as $user) {
+        $message = get_string(
+            'invite',
+            'local_icalsender',
+            (object)[
+                'name' => $user->firstname,
+                'eventname' => $eventrecord->name,
+                'date' => $eventdate,
+                'url' => $url,
+            ]
+        );
+        mailer::local_icalsender_send_ics_mail_from_noreply($user, $subject, $message, $icsdata);
+    }
+}
+
+/**
+ * Sends Attendance cancellations to users who no longer have a calendar-eligible status.
+ *
+ * @param object $eventrecord Event data object.
+ * @param array $users User records keyed by user id.
+ * @param string $url Course URL.
+ * @param array $sequencenumbers Sequence numbers keyed by user id.
+ * @return void
+ */
+function local_icalsender_send_attendance_cancel_ics_attachment($eventrecord, $users, $url, $sequencenumbers) {
+    $subject = get_string('subjectcancel', 'local_icalsender', (object)['eventname' => $eventrecord->name]);
+    $desc = local_icalsender_remove_newlines($eventrecord->description);
+    $from = \core_user::get_noreply_user();
+
+    foreach ($users as $userid => $user) {
+        $message = get_string(
+            'cancel',
+            'local_icalsender',
+            (object)[
+                'name' => $user->firstname,
+                'eventname' => $eventrecord->name,
+                'url' => $url,
+            ]
+        );
+        $seqnumber = (int)($sequencenumbers[$userid] ?? 1);
+        $icsdata = local_icalsender_generate_attendance_cancel_ics($eventrecord, $desc, $user, $from, $seqnumber);
+        mailer::local_icalsender_send_ics_mail_from_noreply($user, $subject, $message, $icsdata);
+    }
 }
 
 

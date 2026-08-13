@@ -32,5 +32,25 @@
         <INDEX NAME="eventid" UNIQUE="true" FIELDS="eventid"/>
       </INDEXES>
     </TABLE>
+    <TABLE NAME="local_icalsender_att_users" COMMENT="Tracks Attendance ICS delivery per user">
+      <FIELDS>
+        <FIELD NAME="id" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="true"/>
+        <FIELD NAME="eventid" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="false" COMMENT="Moodle calendar event ID"/>
+        <FIELD NAME="sessionid" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="false" COMMENT="Attendance session ID"/>
+        <FIELD NAME="userid" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="false" COMMENT="Moodle user ID"/>
+        <FIELD NAME="statusid" TYPE="int" LENGTH="10" NOTNULL="false" SEQUENCE="false" COMMENT="Attendance status ID"/>
+        <FIELD NAME="active" TYPE="int" LENGTH="1" NOTNULL="true" DEFAULT="1" SEQUENCE="false" COMMENT="Whether the user currently has an active Attendance invite"/>
+        <FIELD NAME="seqnum" TYPE="int" LENGTH="10" NOTNULL="true" DEFAULT="0" SEQUENCE="false" COMMENT="Last iCalendar sequence number sent to this user"/>
+        <FIELD NAME="timecreated" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="false"/>
+        <FIELD NAME="timemodified" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="false"/>
+      </FIELDS>
+      <KEYS>
+        <KEY NAME="primary" TYPE="primary" FIELDS="id"/>
+      </KEYS>
+      <INDEXES>
+        <INDEX NAME="sessionuserid" UNIQUE="true" FIELDS="sessionid,userid"/>
+        <INDEX NAME="eventid" UNIQUE="false" FIELDS="eventid"/>
+      </INDEXES>
+    </TABLE>
   </TABLES>
 </XMLDB>

@@ -210,6 +210,93 @@ final class locallib_test extends \advanced_testcase
     }
 
     /**
+     * Test local_icalsender_generate_attendance_ics function with Attendance participants.
+     * @covers \local_icalsender\helper::test_local_icalsender_generate_attendance_ics_basic
+     */
+    public function test_local_icalsender_generate_attendance_ics_basic(): void {
+
+        $eventrecord = new \stdClass();
+        $eventrecord->id = 789;
+        $eventrecord->name = 'Attendance Session';
+        $eventrecord->location = 'Training Room';
+        $eventrecord->timestart = 1715539200;
+        $eventrecord->timeduration = 3600;
+
+        $student = new \stdClass();
+        $student->firstname = 'Alice';
+        $student->lastname = 'Smith';
+        $student->email = 'alice@example.com';
+
+        $student2 = new \stdClass();
+        $student2->firstname = 'Bob';
+        $student2->lastname = 'Jones';
+        $student2->email = 'bob@example.com';
+
+        $from = new \stdClass();
+        $from->email = 'noreply@example.com';
+
+        $ics = local_icalsender_generate_attendance_ics(
+            $eventrecord,
+            'Confirmed attendance session.',
+            [$student, $student2],
+            $from,
+            0
+        );
+
+        $this->assertStringContainsString('BEGIN:VCALENDAR', $ics);
+        $this->assertStringContainsString('METHOD:REQUEST', $ics);
+        $this->assertStringContainsString('UID:attendance-789', $ics);
+        $this->assertStringContainsString('SUMMARY:Attendance Session', $ics);
+        $this->assertStringContainsString('DESCRIPTION:Confirmed attendance session.', $ics);
+        $this->assertStringContainsString('ORGANIZER;CN=LMS Organizer:mailto:noreply@example.com', $ics);
+        $this->assertStringContainsString('ATTENDEE;CN=Alice Smith;ROLE=REQ-PARTICIPANT;', $ics);
+        $this->assertStringContainsString('PARTSTAT=NEEDS-ACTION;RSVP=TRUE:mailto:alice@example.com', $ics);
+        $this->assertStringContainsString('ATTENDEE;CN=Bob Jones;ROLE=REQ-PARTICIPANT;', $ics);
+        $this->assertStringContainsString('PARTSTAT=NEEDS-ACTION;RSVP=TRUE:mailto:bob@example.com', $ics);
+        $this->assertStringContainsString('END:VCALENDAR', $ics);
+        return;
+    }
+
+    /**
+     * Test local_icalsender_generate_attendance_cancel_ics function for one participant.
+     * @covers \local_icalsender\helper::test_local_icalsender_generate_attendance_cancel_ics_basic
+     */
+    public function test_local_icalsender_generate_attendance_cancel_ics_basic(): void {
+
+        $eventrecord = new \stdClass();
+        $eventrecord->id = 789;
+        $eventrecord->name = 'Attendance Session';
+        $eventrecord->location = 'Training Room';
+        $eventrecord->timestart = 1715539200;
+        $eventrecord->timeduration = 3600;
+
+        $student = new \stdClass();
+        $student->firstname = 'Alice';
+        $student->lastname = 'Smith';
+        $student->email = 'alice@example.com';
+
+        $from = new \stdClass();
+        $from->email = 'noreply@example.com';
+
+        $ics = local_icalsender_generate_attendance_cancel_ics(
+            $eventrecord,
+            'Cancelled attendance session.',
+            $student,
+            $from,
+            1
+        );
+
+        $this->assertStringContainsString('BEGIN:VCALENDAR', $ics);
+        $this->assertStringContainsString('METHOD:CANCEL', $ics);
+        $this->assertStringContainsString('UID:attendance-789', $ics);
+        $this->assertStringContainsString('SEQUENCE:1', $ics);
+        $this->assertStringContainsString('STATUS:CANCELLED', $ics);
+        $this->assertStringContainsString('PARTSTAT=DECLINED;RSVP=FALSE:mailto:alice@example.com', $ics);
+        $this->assertStringContainsString('END:VCALENDAR', $ics);
+        return;
+    }
+
+    /**
      * Test local_icalsender_generate_update_ics function with an updated event and attendees.
      * @covers \local_icalsender\helper::test_local_icalsender_generate_update_ics_basic
      */

@@ -56,4 +56,12 @@ $observers = [
         'eventname' => '\core\event\calendar_event_updated',
         'callback'  => '\local_icalsender\observer::calendar_event_updated',
     ],
+    [
+        'eventname' => '\mod_attendance\event\attendance_taken_by_student',
+        'callback'  => '\local_icalsender\observer::attendance_taken_by_student',
+    ],
+    [
+        'eventname' => '\mod_attendance\event\attendance_taken',
+        'callback'  => '\local_icalsender\observer::attendance_taken',
+    ],
 ];
