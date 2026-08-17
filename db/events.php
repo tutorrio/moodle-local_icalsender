@@ -57,6 +57,22 @@ $observers = [
         'callback'  => '\local_icalsender\observer::calendar_event_updated',
     ],
     [
+        'eventname' => '\mod_attendance\event\session_added',
+        'callback'  => '\local_icalsender\observer::attendance_session_added',
+    ],
+    [
+        'eventname' => '\mod_attendance\event\session_deleted',
+        'callback'  => '\local_icalsender\observer::attendance_session_deleted',
+    ],
+    [
+        'eventname' => '\mod_attendance\event\session_updated',
+        'callback'  => '\local_icalsender\observer::attendance_session_updated',
+    ],
+    [
+        'eventname' => '\mod_attendance\event\session_duration_updated',
+        'callback'  => '\local_icalsender\observer::attendance_session_updated',
+    ],
+    [
         'eventname' => '\mod_attendance\event\attendance_taken_by_student',
         'callback'  => '\local_icalsender\observer::attendance_taken_by_student',
     ],

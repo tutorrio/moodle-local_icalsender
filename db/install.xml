@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8" ?>
-<XMLDB PATH="local/icalsender/db" VERSION="20260623" COMMENT="XMLDB file for Moodle local/icalsender"
+<XMLDB PATH="local/icalsender/db" VERSION="20260817" COMMENT="XMLDB file for Moodle local/icalsender"
     xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
     xsi:noNamespaceSchemaLocation="../../../lib/xmldb/xmldb.xsd"
 >
@@ -49,6 +49,28 @@
       </KEYS>
       <INDEXES>
         <INDEX NAME="sessionuserid" UNIQUE="true" FIELDS="sessionid,userid"/>
+        <INDEX NAME="eventid" UNIQUE="false" FIELDS="eventid"/>
+      </INDEXES>
+    </TABLE>
+    <TABLE NAME="local_icalsender_att_sessions" COMMENT="Tracks Attendance calendar event metadata per session">
+      <FIELDS>
+        <FIELD NAME="id" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="true"/>
+        <FIELD NAME="sessionid" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="false" COMMENT="Attendance session ID"/>
+        <FIELD NAME="eventid" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="false" COMMENT="Moodle calendar event ID or generated fallback event ID"/>
+        <FIELD NAME="courseid" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="false" COMMENT="Moodle course ID"/>
+        <FIELD NAME="eventname" TYPE="text" NOTNULL="false" SEQUENCE="false" COMMENT="Calendar event name"/>
+        <FIELD NAME="description" TYPE="text" NOTNULL="false" SEQUENCE="false" COMMENT="Calendar event description"/>
+        <FIELD NAME="location" TYPE="char" LENGTH="255" NOTNULL="false" SEQUENCE="false" COMMENT="Calendar event location"/>
+        <FIELD NAME="timestart" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="false" COMMENT="Calendar event start time"/>
+        <FIELD NAME="timeduration" TYPE="int" LENGTH="10" NOTNULL="true" DEFAULT="0" SEQUENCE="false" COMMENT="Calendar event duration"/>
+        <FIELD NAME="timecreated" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="false"/>
+        <FIELD NAME="timemodified" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="false"/>
+      </FIELDS>
+      <KEYS>
+        <KEY NAME="primary" TYPE="primary" FIELDS="id"/>
+      </KEYS>
+      <INDEXES>
+        <INDEX NAME="sessionid" UNIQUE="true" FIELDS="sessionid"/>
         <INDEX NAME="eventid" UNIQUE="false" FIELDS="eventid"/>
       </INDEXES>
     </TABLE>

@@ -403,7 +403,45 @@ function local_icalsender_send_attendance_invite_ics_attachment($eventrecord, $u
 }
 
 /**
- * Sends Attendance cancellations to users who no longer have a calendar-eligible status.
+ * Sends an Attendance update to users with an active session calendar event.
+ *
+ * @param object $eventrecord Event data object.
+ * @param array $users Attendance participant user records.
+ * @param string $url Course URL.
+ * @param int $seqnumber Sequence number for the event update.
+ * @return void
+ */
+function local_icalsender_send_attendance_update_ics_attachment($eventrecord, $users, $url, $seqnumber) {
+    $eventdate = userdate($eventrecord->timestart);
+    $subject = get_string(
+        'subjectupdate',
+        'local_icalsender',
+        (object)[
+            'eventname' => $eventrecord->name,
+            'date' => $eventdate,
+        ]
+    );
+    $desc = local_icalsender_remove_newlines($eventrecord->description);
+    $from = \core_user::get_noreply_user();
+    $icsdata = local_icalsender_generate_attendance_ics($eventrecord, $desc, $users, $from, $seqnumber);
+
+    foreach ($users as $user) {
+        $message = get_string(
+            'update',
+            'local_icalsender',
+            (object)[
+                'name' => $user->firstname,
+                'eventname' => $eventrecord->name,
+                'date' => $eventdate,
+                'url' => $url,
+            ]
+        );
+        mailer::local_icalsender_send_ics_mail_from_noreply($user, $subject, $message, $icsdata);
+    }
+}
+
+/**
+ * Sends Attendance cancellations to users whose session calendar event is being removed.
  *
  * @param object $eventrecord Event data object.
  * @param array $users User records keyed by user id.

@@ -105,5 +105,36 @@ function xmldb_local_icalsender_upgrade($oldversion) {
         upgrade_plugin_savepoint(true, 2026081302, 'local', 'icalsender');
     }
 
+    if ($oldversion < 2026081400) {
+        global $DB;
+        $dbman = $DB->get_manager();
+
+        $table = new xmldb_table('local_icalsender_att_sessions');
+        $table->add_field('id', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, XMLDB_SEQUENCE);
+        $table->add_field('sessionid', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL);
+        $table->add_field('eventid', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL);
+        $table->add_field('courseid', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL);
+        $table->add_field('eventname', XMLDB_TYPE_TEXT);
+        $table->add_field('description', XMLDB_TYPE_TEXT);
+        $table->add_field('location', XMLDB_TYPE_CHAR, '255');
+        $table->add_field('timestart', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL);
+        $table->add_field('timeduration', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, null, '0');
+        $table->add_field('timecreated', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL);
+        $table->add_field('timemodified', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL);
+        $table->add_key('primary', XMLDB_KEY_PRIMARY, ['id']);
+        $table->add_index('sessionid', XMLDB_INDEX_UNIQUE, ['sessionid']);
+        $table->add_index('eventid', XMLDB_INDEX_NOTUNIQUE, ['eventid']);
+
+        if (!$dbman->table_exists($table)) {
+            $dbman->create_table($table);
+        }
+
+        upgrade_plugin_savepoint(true, 2026081400, 'local', 'icalsender');
+    }
+
+    if ($oldversion < 2026081700) {
+        upgrade_plugin_savepoint(true, 2026081700, 'local', 'icalsender');
+    }
+
     return true;
 }

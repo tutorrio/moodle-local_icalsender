@@ -11,6 +11,10 @@ The logic is triggered by listening  to following Moodle system event:
 - \core\event\user_enrolment_deleted
 - \core\event\group_member_added
 - \core\event\group_member_removed
+- \mod_attendance\event\session_added
+- \mod_attendance\event\session_deleted
+- \mod_attendance\event\session_updated
+- \mod_attendance\event\session_duration_updated
 - \mod_attendance\event\attendance_taken_by_student
 - \mod_attendance\event\attendance_taken
 
@@ -27,8 +31,15 @@ ICS invite is sent in following scenario's:
 - when organizer (un)enrolling a user to/from a course that is linked to a calendar event
 - when organizer adds/removes a user to/from a group that is in a course linked to a calendar event
 - when organizer updates the event (like change the date/hour/location)
-- when an Attendance session is taken or a student self-confirms an Attendance session, if the optional Attendance activity plugin is installed
-  and the Attendance activity uses the default status set: Present, Absent, Late, Excused
+- when an Attendance session is created, if the optional Attendance activity plugin is installed, for the users enrolled
+  in the course or group at that moment
+- when an enrolled user later marks a calendar-eligible Attendance status and no Attendance calendar invite/event was
+  previously created for that user and session
+- when a user is marked Absent or Excused for an Attendance session, the user's personal invite is cancelled and the
+  user is removed from the shared calendar event when shared-calendar delivery is configured
+- when an Attendance session date or duration is updated, previously created personal invites and shared calendar
+  events for that session are updated
+- when an Attendance session is deleted, any calendar invites/events created for that session are cancelled or deleted
 
 Currently not supported:
 
@@ -95,10 +106,12 @@ After the service account and course custom field are configured, no additional 
 - Creating a future Moodle course or group event creates an event in the calendar identified by `calendarid`.
 - Updating the Moodle event updates the corresponding Google event.
 - Deleting the Moodle event deletes the corresponding Google event.
-- When an Attendance session is taken or a student self-confirms an Attendance session, the linked Attendance calendar
-  event is created or updated in the calendar identified by `calendarid`. Present and Late users are included as
-  attendees. Absent and Excused users have their Attendance calendar event removed. If no users have a
-  calendar-eligible Attendance status, the shared calendar event is deleted.
+- When an Attendance session is created, the linked Attendance calendar event is created in the calendar identified by
+  `calendarid` for the users enrolled in the course or group at that moment. If a later-enrolled user marks a
+  calendar-eligible Attendance status, the shared calendar event is created or updated only when that user was not
+  already covered. If a user is marked Absent or Excused, that user is removed from the shared calendar event and sent
+  a cancellation for their personal calendar. Updating the Attendance session date or duration updates previously
+  created calendar events. Deleting the Attendance session deletes the corresponding shared calendar event.
 - Changing `calendarid` and then updating a Moodle event removes it from the previous calendar and creates it in the new calendar.
 - Enrolled course users are included as attendees of course events; group members are included as attendees of group events.
 - User enrolment, unenrolment and group membership changes update the attendee list without creating duplicate events in the shared Google calendar.
@@ -112,4 +125,6 @@ as **Google Calendar synchronisation failed** events, including the Moodle event
 when known, and the safe portion of Google's error response. With Moodle developer debugging enabled, failures
 are also reported with messages beginning with `icalsender: Google Calendar`.
 
-This plugin stores ICS delivery state in `local_icalsender_ics_events` and Google event mappings in `local_icalsender_gcal_events`.
+This plugin stores ICS delivery state in `local_icalsender_ics_events`, per-user Attendance delivery state in
+`local_icalsender_att_users`, Attendance session calendar metadata in `local_icalsender_att_sessions`, and Google event
+mappings in `local_icalsender_gcal_events`.
