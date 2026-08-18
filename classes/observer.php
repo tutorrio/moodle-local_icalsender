@@ -1326,6 +1326,7 @@ class observer
      *
      * @param array $records Existing delivery records.
      * @param array $createusers Newly invited user records keyed by user id.
+     * @param array $canceluserids User ids to exclude from the active attendees.
      * @return array User records keyed by user id.
      */
     private static function attendance_active_users(array $records, array $createusers, array $canceluserids = []): array {
