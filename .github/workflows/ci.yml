@@ -97,7 +97,15 @@ jobs:
 
       - name: Grunt
         if: ${{ !cancelled() }}
-        run: moodle-plugin-ci grunt --max-lint-warnings 0 ./plugin
+        run: |
+          if find ./plugin \
+              \( -path './plugin/.git' -o -path './plugin/node_modules' -o -path './plugin/vendor' \) -prune -o \
+              -type f \( -name '*.js' -o -name '*.css' -o -name '*.scss' -o -name '*.less' \) \
+              -print -quit | grep -q .; then
+            moodle-plugin-ci grunt --max-lint-warnings 0 ./plugin
+          else
+            echo "No JavaScript or CSS/SCSS/Less source files found; skipping Grunt."
+          fi
 
       - name: PHPUnit tests
         if: ${{ !cancelled() }}
