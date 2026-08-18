@@ -136,5 +136,13 @@ function xmldb_local_icalsender_upgrade($oldversion) {
         upgrade_plugin_savepoint(true, 2026081700, 'local', 'icalsender');
     }
 
+    if ($oldversion < 2026081800) {
+        upgrade_plugin_savepoint(true, 2026081800, 'local', 'icalsender');
+    }
+
+    if ($oldversion < 2026081801) {
+        upgrade_plugin_savepoint(true, 2026081801, 'local', 'icalsender');
+    }
+
     return true;
 }

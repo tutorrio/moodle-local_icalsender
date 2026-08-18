@@ -81,26 +81,40 @@ class observer
             return;
         }
 
-        // Check if SQL query returned calendar events.
-        if (empty($events)) {
-            return;
-        }
-
         $courseurl = new \moodle_url('/course/view.php', ['id' => $courseid]);
         $userenrol[] = $enrolleduser;
-        foreach ($events as $eventrecord) {
-            if ($eventrecord->timestart + $eventrecord->timeduration < time()) { // Check event is in the past.
-                continue;
+        if (!empty($events)) {
+            foreach ($events as $eventrecord) {
+                if ($eventrecord->timestart + $eventrecord->timeduration < time()) { // Check event is in the past.
+                    continue;
+                }
+                if (event_delivery::uses_api()) {
+                    event_delivery::event_updated($eventrecord, $courseurl->out(false), $enrolledusers);
+                    continue;
+                }
+                $eventid = $eventrecord->id;
+                $seqnum = local_icalsender_get_sequence_number($eventid);
+                local_icalsender_send_mail_with_ics_attachment(
+                    $eventrecord,
+                    $userenrol,
+                    $courseurl->out(),
+                    false,
+                    $seqnum
+                );
+                local_icalsender_send_mail_with_update_ics_attachment(
+                    $eventrecord,
+                    $enrolledusers,
+                    $courseurl->out(),
+                    true,
+                    $seqnum
+                );
             }
-            if (event_delivery::uses_api()) {
-                event_delivery::event_updated($eventrecord, $courseurl->out(false), $enrolledusers);
-                continue;
-            }
-            $eventid = $eventrecord->id;
-            $seqnum = local_icalsender_get_sequence_number($eventid);
-            local_icalsender_send_mail_with_ics_attachment($eventrecord, $userenrol, $courseurl->out(), false, $seqnum);
-            local_icalsender_send_mail_with_update_ics_attachment($eventrecord, $enrolledusers, $courseurl->out(), true, $seqnum);
         }
+        self::send_existing_attendance_sessions_to_enrolled_user(
+            (int)$courseid,
+            $enrolleduser,
+            isset($groupid) ? (int)$groupid : null
+        );
     }
 
 
@@ -128,26 +142,21 @@ class observer
         }
 
         if ($event instanceof \core\event\user_enrolment_deleted) {
-            $context = \context_course::instance($courseid);
-            $enrolledusers   = get_enrolled_users($context);
-            // Select all events..both Group and course since user is fully unenrolled from course.
+            // Select both course and group events since the user is fully unenrolled from the course.
             $sql = 'SELECT  *
                     FROM    {event}
                     WHERE   courseid = :courseid
-                            AND eventtype = "course"';
+                            AND eventtype IN ("course", "group")';
             $events = $DB->get_records_sql($sql, ['courseid' => $courseid]);
         } else if ($event instanceof \core\event\cohort_member_removed) {
-            $cohortid = $event->objectid;
-            $enrolledusers = cohort_get_members($cohortid);
-            // Select all events..both Group and course since user is fully unenrolled from course.
+            // Select both course and group events since the user is fully unenrolled from the course.
             $sql = 'SELECT  *
                     FROM    {event}
                     WHERE   courseid = :courseid
-                            AND eventtype = "course"';
+                            AND eventtype IN ("course", "group")';
             $events = $DB->get_records_sql($sql, ['courseid' => $courseid]);
         } else if ($event instanceof \core\event\group_member_removed) {
             $groupid = $event->objectid;
-            $enrolledusers = groups_get_members($groupid);
             // Only select 'group' calendar since this event only impacts group changes.
             $sql = 'SELECT  *
                     FROM    {event}
@@ -160,29 +169,59 @@ class observer
             return;
         }
 
-        // Check if SQL query returned any calendar events.
-        if (empty($events)) {
-            return;
-        }
-
         $courseurl = new \moodle_url('/course/view.php', ['id' => $courseid]);
         $userunenrol[] = $unenrolleduser;
-        foreach ($events as $eventrecord) {
-            // Check event is in the past.
-            if ($eventrecord->timestart + $eventrecord->timeduration < time()) {
-                continue;  // Event is in the past, skip it.
+        if (!empty($events)) {
+            foreach ($events as $eventrecord) {
+                // Check event is in the past.
+                if ($eventrecord->timestart + $eventrecord->timeduration < time()) {
+                    continue;  // Event is in the past, skip it.
+                }
+                $eventusers = self::calendar_event_users($eventrecord);
+                if (event_delivery::uses_api()) {
+                    event_delivery::event_updated($eventrecord, $courseurl->out(false), $eventusers, false);
+                    continue;
+                }
+                $eventid = $eventrecord->id;
+                $seqnum = local_icalsender_get_sequence_number($eventid);
+                // Send delete to unenrolled user.
+                local_icalsender_send_mail_with_delete_ics_attachment(
+                    $eventrecord,
+                    $userunenrol,
+                    $courseurl->out(),
+                    false,
+                    $seqnum
+                );
+                // Send update to organizer.
+                local_icalsender_send_mail_with_update_ics_attachment(
+                    $eventrecord,
+                    $eventusers,
+                    $courseurl->out(),
+                    true,
+                    $seqnum
+                );
             }
-            if (event_delivery::uses_api()) {
-                event_delivery::event_updated($eventrecord, $courseurl->out(false), $enrolledusers);
-                continue;
-            }
-            $eventid = $eventrecord->id;
-            $seqnum = local_icalsender_get_sequence_number($eventid);
-            // Send delete to unenrolled user.
-            local_icalsender_send_mail_with_delete_ics_attachment($eventrecord, $userunenrol, $courseurl->out(), false, $seqnum);
-            // Send update to organizer.
-            local_icalsender_send_mail_with_update_ics_attachment($eventrecord, $enrolledusers, $courseurl->out(), true, $seqnum);
         }
+        self::cancel_future_attendance_sessions_for_unenrolled_user(
+            (int)$courseid,
+            $unenrolleduser,
+            isset($groupid) ? (int)$groupid : null
+        );
+    }
+
+    /**
+     * Get the active enrolled users for a Moodle calendar event.
+     *
+     * @param \stdClass $eventrecord Moodle event record.
+     * @return array User records keyed by user id.
+     */
+    private static function calendar_event_users(\stdClass $eventrecord): array {
+        $context = \context_course::instance((int)$eventrecord->courseid);
+        $groupid = (int)($eventrecord->groupid ?? 0);
+        if ((string)$eventrecord->eventtype === 'group' && $groupid > 0) {
+            return get_enrolled_users($context, '', $groupid, 'u.*', null, 0, 0, true);
+        }
+        return get_enrolled_users($context, '', 0, 'u.*', null, 0, 0, true);
     }
 
     /**
@@ -303,6 +342,255 @@ class observer
         }
 
         self::save_attendance_invite_state($sessionid, (int)$eventrecord->id, $users, [], [], 0);
+    }
+
+    /**
+     * Send existing Attendance session invites to a user who was enrolled after those sessions were created.
+     *
+     * @param int $courseid Moodle course id.
+     * @param \stdClass $user Newly enrolled user record.
+     * @param int|null $groupid Group id when handling a group membership change.
+     * @return void
+     */
+    private static function send_existing_attendance_sessions_to_enrolled_user(
+        int $courseid,
+        \stdClass $user,
+        ?int $groupid = null
+    ): void {
+        global $DB;
+
+        $dbman = $DB->get_manager();
+        if (!$dbman->table_exists('attendance') || !$dbman->table_exists('attendance_sessions')) {
+            return;
+        }
+
+        $params = ['courseid' => $courseid];
+        $groupwhere = '';
+        if ($groupid !== null) {
+            $params['groupid'] = $groupid;
+            $groupwhere = ' AND s.groupid = :groupid';
+        }
+
+        $sql = "SELECT s.*
+                  FROM {attendance_sessions} s
+                  JOIN {attendance} a ON a.id = s.attendanceid
+                 WHERE a.course = :courseid
+                       {$groupwhere}
+              ORDER BY s.sessdate ASC, s.id ASC";
+        $sessions = $DB->get_records_sql($sql, $params);
+
+        foreach ($sessions as $session) {
+            self::send_existing_attendance_session_to_enrolled_user($session, $user);
+        }
+    }
+
+    /**
+     * Send/update calendar delivery for one existing Attendance session and one newly enrolled user.
+     *
+     * @param \stdClass $session Attendance session record.
+     * @param \stdClass $user Newly enrolled user record.
+     * @return void
+     */
+    private static function send_existing_attendance_session_to_enrolled_user(\stdClass $session, \stdClass $user): void {
+        global $CFG;
+        require_once($CFG->dirroot . '/local/icalsender/locallib.php');
+
+        $eventrecord = self::attendance_event_record($session);
+        if (!$eventrecord) {
+            return;
+        }
+        if ($eventrecord->timestart + $eventrecord->timeduration < time()) {
+            return;
+        }
+
+        $sessionid = (int)$session->id;
+        self::save_attendance_session_snapshot($sessionid, $eventrecord);
+
+        $sessionusers = self::attendance_session_users($eventrecord);
+        $userid = (int)$user->id;
+        if (empty($sessionusers[$userid])) {
+            return;
+        }
+
+        $records = self::attendance_delivery_records($sessionid);
+        $newuser = [$userid => $sessionusers[$userid]];
+        $statusdata = self::attendance_calendar_users($sessionid, $newuser);
+        if (!empty($statusdata['inactiveusers'][$userid])) {
+            return;
+        }
+
+        $createusers = [];
+        if (empty($records[$userid]) || empty($records[$userid]->active)) {
+            $createusers[$userid] = $sessionusers[$userid];
+        }
+
+        $courseurl = new \moodle_url('/course/view.php', ['id' => $eventrecord->courseid]);
+        if (event_delivery::uses_api()) {
+            if (!self::shared_calendar_event_exists((int)$eventrecord->id)) {
+                return;
+            }
+
+            $apiusers = self::attendance_shared_calendar_users($sessionid, $sessionusers);
+            if (empty($apiusers)) {
+                event_delivery::event_deleted((int)$eventrecord->id);
+            } else {
+                event_delivery::event_updated($eventrecord, $courseurl->out(false), $apiusers, false);
+            }
+            $saveusers = [];
+            foreach ($apiusers as $apiuserid => $apiuser) {
+                if (empty($records[$apiuserid]) || empty($records[$apiuserid]->active)) {
+                    $saveusers[$apiuserid] = $apiuser;
+                }
+            }
+            if (!empty($saveusers)) {
+                $apistatusdata = self::attendance_calendar_users($sessionid, $apiusers);
+                self::save_attendance_invite_state(
+                    $sessionid,
+                    (int)$eventrecord->id,
+                    $saveusers,
+                    $apistatusdata['statusids'],
+                    $records,
+                    self::attendance_next_sequence($records)
+                );
+            }
+            return;
+        }
+
+        if (empty($createusers)) {
+            return;
+        }
+
+        $seqnum = self::attendance_next_sequence($records);
+        local_icalsender_send_attendance_invite_ics_attachment($eventrecord, $createusers, $courseurl->out(), $seqnum);
+        self::save_attendance_invite_state(
+            $sessionid,
+            (int)$eventrecord->id,
+            $createusers,
+            $statusdata['statusids'],
+            $records,
+            $seqnum
+        );
+    }
+
+    /**
+     * Cancel a user's future Attendance deliveries after they are unenrolled.
+     *
+     * @param int $courseid Moodle course id.
+     * @param \stdClass $user Unenrolled user record.
+     * @param int|null $groupid Group id when handling a group membership removal.
+     * @return void
+     */
+    private static function cancel_future_attendance_sessions_for_unenrolled_user(
+        int $courseid,
+        \stdClass $user,
+        ?int $groupid = null
+    ): void {
+        global $DB;
+
+        $dbman = $DB->get_manager();
+        if (!$dbman->table_exists('attendance') || !$dbman->table_exists('attendance_sessions')) {
+            return;
+        }
+
+        $params = ['courseid' => $courseid];
+        $groupwhere = '';
+        if ($groupid !== null) {
+            $params['groupid'] = $groupid;
+            $groupwhere = ' AND s.groupid = :groupid';
+        }
+
+        $sql = "SELECT s.*
+                  FROM {attendance_sessions} s
+                  JOIN {attendance} a ON a.id = s.attendanceid
+                 WHERE a.course = :courseid
+                       {$groupwhere}
+              ORDER BY s.sessdate ASC, s.id ASC";
+        $sessions = $DB->get_records_sql($sql, $params);
+
+        foreach ($sessions as $session) {
+            self::cancel_future_attendance_session_for_unenrolled_user($session, $user);
+        }
+    }
+
+    /**
+     * Cancel/update delivery for one future Attendance session after unenrolment.
+     *
+     * @param \stdClass $session Attendance session record.
+     * @param \stdClass $user Unenrolled user record.
+     * @return void
+     */
+    private static function cancel_future_attendance_session_for_unenrolled_user(
+        \stdClass $session,
+        \stdClass $user
+    ): void {
+        global $CFG;
+        require_once($CFG->dirroot . '/local/icalsender/locallib.php');
+
+        $eventrecord = self::attendance_event_record($session);
+        if (!$eventrecord) {
+            return;
+        }
+        if ($eventrecord->timestart + $eventrecord->timeduration < time()) {
+            return;
+        }
+
+        $sessionid = (int)$session->id;
+        $userid = (int)$user->id;
+        $records = self::attendance_delivery_records($sessionid);
+        $record = $records[$userid] ?? null;
+        $cancelusers = [];
+        if ($record && !empty($record->active)) {
+            $cancelusers[$userid] = $user;
+        }
+
+        $courseurl = new \moodle_url('/course/view.php', ['id' => $eventrecord->courseid]);
+        if (event_delivery::uses_api()) {
+            if (self::shared_calendar_event_exists((int)$eventrecord->id)) {
+                $apiusers = self::attendance_shared_calendar_users(
+                    $sessionid,
+                    self::attendance_session_users($eventrecord)
+                );
+                if (empty($apiusers)) {
+                    event_delivery::event_deleted((int)$eventrecord->id);
+                } else {
+                    event_delivery::event_updated($eventrecord, $courseurl->out(false), $apiusers, false);
+                }
+            }
+            self::cancel_personal_attendance_delivery($sessionid, $eventrecord, $cancelusers, $records);
+            return;
+        }
+
+        self::cancel_personal_attendance_delivery($sessionid, $eventrecord, $cancelusers, $records);
+    }
+
+    /**
+     * Send a personal Attendance cancellation and mark local delivery inactive.
+     *
+     * @param int $sessionid Attendance session id.
+     * @param \stdClass $eventrecord Event data object.
+     * @param array $cancelusers Users to cancel keyed by user id.
+     * @param array $records Existing delivery records keyed by user id.
+     * @return void
+     */
+    private static function cancel_personal_attendance_delivery(
+        int $sessionid,
+        \stdClass $eventrecord,
+        array $cancelusers,
+        array $records
+    ): void {
+        if (empty($cancelusers)) {
+            return;
+        }
+
+        $seqnum = self::attendance_next_sequence($records);
+        $courseurl = new \moodle_url('/course/view.php', ['id' => $eventrecord->courseid]);
+        local_icalsender_send_attendance_cancel_ics_attachment(
+            $eventrecord,
+            $cancelusers,
+            $courseurl->out(),
+            array_fill_keys(array_keys($cancelusers), $seqnum)
+        );
+        self::save_attendance_cancel_state($sessionid, (int)$eventrecord->id, $cancelusers, [], $records, $seqnum);
     }
 
     /**
@@ -636,6 +924,36 @@ class observer
             'inactiveusers' => $inactiveusers,
             'inactiveids' => $inactiveids,
         ];
+    }
+
+    /**
+     * Get the attendee list that should remain on a shared Attendance calendar event.
+     *
+     * Users with no Attendance mark yet remain active because session creation invites all enrolled users.
+     *
+     * @param int $sessionid Attendance session id.
+     * @param array $sessionusers Active enrolled course or group users keyed by user id.
+     * @return array User records keyed by user id.
+     */
+    private static function attendance_shared_calendar_users(int $sessionid, array $sessionusers): array {
+        $statusdata = self::attendance_calendar_users($sessionid, $sessionusers);
+        $users = $sessionusers;
+        foreach (array_keys($statusdata['inactiveusers']) as $userid) {
+            unset($users[$userid]);
+        }
+        return $users;
+    }
+
+    /**
+     * Whether a Moodle event already has a shared calendar mapping.
+     *
+     * @param int $eventid Moodle calendar event id.
+     * @return bool
+     */
+    private static function shared_calendar_event_exists(int $eventid): bool {
+        global $DB;
+
+        return $DB->record_exists('local_icalsender_gcal_events', ['eventid' => $eventid]);
     }
 
     /**
