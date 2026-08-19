@@ -1,4 +1,5 @@
 /vendor/
 /moodle/
 /moodledata/
+/node_modules/
 /scripts/ci/
